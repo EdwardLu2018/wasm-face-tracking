@@ -12,7 +12,7 @@ endif( NOT CMAKE_BUILD_TYPE )
 set( CMAKE_CXX_FLAGS_RELEASE "-Oz" )
 
 # Needed for dlib/*
-add_subdirectory( dlib )
+add_subdirectory( dlib/dlib )
 
 set( DLIB_NO_GUI_SUPPORT ON )
 
