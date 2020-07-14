@@ -1,0 +1,6 @@
+/Users/Edward/Desktop/dlib/examples/build/CMakeFiles/rebuild_cache.dir
+/Users/Edward/Desktop/dlib/examples/build/CMakeFiles/edit_cache.dir
+/Users/Edward/Desktop/dlib/examples/build/CMakeFiles/detect_face.dir
+/Users/Edward/Desktop/dlib/examples/build/dlib_build/CMakeFiles/rebuild_cache.dir
+/Users/Edward/Desktop/dlib/examples/build/dlib_build/CMakeFiles/edit_cache.dir
+/Users/Edward/Desktop/dlib/examples/build/dlib_build/CMakeFiles/dlib.dir
