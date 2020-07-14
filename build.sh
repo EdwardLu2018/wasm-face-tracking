@@ -9,3 +9,5 @@ cd build
 
 emcmake cmake -DLIB_NO_GUI_SUPPORT=ON ..
 emmake make
+
+cp detect_face_wasm* ..
