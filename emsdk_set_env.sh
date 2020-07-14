@@ -1,5 +1,0 @@
-export PATH="/Users/Edward/Desktop/dlib/emsdk:/Users/Edward/Desktop/dlib/emsdk/upstream/emscripten:/Users/Edward/Desktop/dlib/emsdk/node/12.18.1_64bit/bin:/Users/Edward/bin:/usr/local/bin:/usr/local/opt/openssl/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/Edward/Documents/chromedriver:/usr/local/share/dotnet:/opt/X11/bin:~/.dotnet/tools:/Library/Apple/usr/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands"
-export EMSDK="/Users/Edward/Desktop/dlib/emsdk"
-export EM_CONFIG="/Users/Edward/Desktop/dlib/emsdk/.emscripten"
-export EM_CACHE="/Users/Edward/Desktop/dlib/emsdk/upstream/emscripten/cache"
-export EMSDK_NODE="/Users/Edward/Desktop/dlib/emsdk/node/12.18.1_64bit/bin/node"
