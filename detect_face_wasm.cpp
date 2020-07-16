@@ -1,12 +1,11 @@
 #include <emscripten/emscripten.h>
 #include <iostream>
-#include <vector>
 
 #include <dlib/image_processing.h>
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_transforms.h>
 
-#define DOWNSAMPLE_RATIO    3
+#define DOWNSAMPLE_RATIO    1.25
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,7 +27,7 @@ void pose_model_init(char buf[], size_t buf_len) {
 
     delete [] buf;
 
-    cout << "ready to detect!\n";
+    cout << "Ready to detect!\n";
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -48,7 +47,7 @@ uint16_t *detect_face_features(unsigned char srcData[], size_t srcCols, size_t s
         for (int j = 0; j < srcCols; ++j) {
             idx = (i * srcCols * 4) + j * 4;
 
-            // rgba format to rgb
+            // rgba to rgb
             unsigned char r = srcData[idx];
             unsigned char g = srcData[idx + 1];
             unsigned char b = srcData[idx + 2];

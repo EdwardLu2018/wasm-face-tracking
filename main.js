@@ -1,21 +1,19 @@
+let width = 640;
+
 function initStats() {
     window.stats = new Stats();
     window.stats.showPanel(0);
     document.getElementById("stats").appendChild(stats.domElement);
-};
+}
 
 function setVideoStyle(elem) {
     elem.style.position = "absolute";
-    elem.style.right = 0;
-    elem.style.bottom = 0;
-    elem.style.minWidth = "100%";
-    elem.style.minHeight = "100%";
+    elem.style.top = 0;
+    elem.style.left = 0;
 }
 
 function setupVideo(displayCanv, displayOverlay, setupCallback) {
     window.videoElem = document.createElement("video");
-    setVideoStyle(window.videoElem);
-    // document.body.appendChild(window.videoElem);
 
     navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" },
@@ -32,6 +30,7 @@ function setupVideo(displayCanv, displayOverlay, setupCallback) {
 
     window.videoCanv = document.createElement("canvas");
     setVideoStyle(window.videoCanv);
+    window.videoCanv.style.zIndex = 100;
     if (displayCanv) {
         document.body.appendChild(window.videoCanv);
     }
@@ -39,12 +38,16 @@ function setupVideo(displayCanv, displayOverlay, setupCallback) {
     if (displayOverlay) {
         window.overlayCanv = document.createElement("canvas");
         setVideoStyle(window.overlayCanv);
+        window.overlayCanv.style.zIndex = 200;
         document.body.appendChild(window.overlayCanv);
     }
 
     window.videoElem.addEventListener("canplay", function(e) {
-        window.width = window.videoElem.videoWidth;
-        window.height = window.videoElem.videoHeight;
+        window.width = width;
+        window.height = window.videoElem.videoHeight / (window.videoElem.videoWidth / window.width);
+
+        window.videoElem.setAttribute("width", window.width);
+        window.videoElem.setAttribute("height", window.height);
 
         window.videoCanv.width = window.width;
         window.videoCanv.height = window.height;
