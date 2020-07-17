@@ -1,4 +1,4 @@
-let width = 640;
+let width = 320;
 
 function initStats() {
     window.stats = new Stats();
@@ -92,8 +92,39 @@ function drawPolyline(landmarks, start, end, closed) {
     overlayCtx.stroke();
 }
 
-function drawPolylines(landmarks) {
-    if (landmarks === undefined || landmarks.length != 68) return;
+function drawBbox(bbox) {
+    const overlayCtx = window.overlayCanv.getContext("2d");
+
+    overlayCtx.beginPath();
+    overlayCtx.strokeStyle = "red";
+    overlayCtx.lineWidth = 2;
+
+    // [x1,y1,x2,y2]
+    overlayCtx.moveTo(bbox[0], bbox[1]);
+    overlayCtx.lineTo(bbox[0], bbox[3]);
+    overlayCtx.lineTo(bbox[2], bbox[3]);
+    overlayCtx.lineTo(bbox[2], bbox[1]);
+    overlayCtx.lineTo(bbox[0], bbox[1]);
+
+    overlayCtx.stroke();
+}
+
+function hasFace(landmarks) {
+    if (!landmarks || landmarks.length == 0) return false;
+
+    let zeros = 0;
+    for (let i = 0; i < landmarks.length; i++) {
+        if (i % 2 == 0 && landmarks[i] > window.width) return false;
+        if (i % 2 == 1 && landmarks[i] > window.height) return false;
+        if (landmarks[i] == 0) {
+            zeros++;
+        }
+    }
+    return zeros <= landmarks.length / 3;
+}
+
+function drawOverlay(landmarks, bbox) {
+    if (!landmarks || !bbox) return;
 
     const overlayCtx = window.overlayCanv.getContext("2d");
     overlayCtx.clearRect(
@@ -102,23 +133,44 @@ function drawPolylines(landmarks) {
         window.height
     );
 
-    drawPolyline(landmarks, 0,  16, false);   // jaw
-    drawPolyline(landmarks, 17, 21, false);   // left eyebrow
-    drawPolyline(landmarks, 22, 26, false);   // right eyebrow
-    drawPolyline(landmarks, 27, 30, false);   // nose bridge
-    drawPolyline(landmarks, 30, 35, true);    // lower nose
-    drawPolyline(landmarks, 36, 41, true);    // left eye
-    drawPolyline(landmarks, 42, 47, true);    // right Eye
-    drawPolyline(landmarks, 48, 59, true);    // outer lip
-    drawPolyline(landmarks, 60, 67, true);    // inner lip
+    let landmarksFormatted = [];
+    let face = hasFace(landmarks);
+    for (let i = 0; i < landmarks.length; i += 2) {
+        if (face) {
+            const l = [landmarks[i], landmarks[i+1]];
+            landmarksFormatted.push(l);
+        }
+        else {
+            landmarksFormatted.push([0,0]);
+        }
+    }
+
+    drawBbox(bbox);
+
+    drawPolyline(landmarksFormatted, 0,  16, false);   // jaw
+    drawPolyline(landmarksFormatted, 17, 21, false);   // left eyebrow
+    drawPolyline(landmarksFormatted, 22, 26, false);   // right eyebrow
+    drawPolyline(landmarksFormatted, 27, 30, false);   // nose bridge
+    drawPolyline(landmarksFormatted, 30, 35, true);    // lower nose
+    drawPolyline(landmarksFormatted, 36, 41, true);    // left eye
+    drawPolyline(landmarksFormatted, 42, 47, true);    // right Eye
+    drawPolyline(landmarksFormatted, 48, 59, true);    // outer lip
+    drawPolyline(landmarksFormatted, 60, 67, true);    // inner lip
 }
 
 function processVideo() {
     window.stats.begin();
-    const frame = getFrame();
-    const landmarks = window.faceDetector.detect(frame, window.width, window.height);
-    drawPolylines(landmarks);
+
+    const [landmarksRaw, bbox] = window.faceDetector.detect(getFrame(), window.width, window.height);
+    // console.log(landmarksRaw)
+    const [quat, trans] = window.faceDetector.getPose(landmarksRaw, window.width, window.height);
+    console.log(quat);
+    // console.log(eulerToQuat(euler[0], euler[1], euler[2]));
+
+    drawOverlay(landmarksRaw, bbox);
+
     window.stats.end();
+
     requestAnimationFrame(processVideo);
 }
 
