@@ -9,7 +9,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 set( CMAKE_CXX_FLAGS_RELEASE "-O3" )
 
-add_subdirectory( dlib )
+add_subdirectory( dlib/dlib )
 
 set( DLIB_NO_GUI_SUPPORT ON )
 
