@@ -1,4 +1,4 @@
-let width = 320;
+let width = Math.min(window.innerWidth, window.innerHeight);
 
 function initStats() {
     window.stats = new Stats();
@@ -14,6 +14,9 @@ function setVideoStyle(elem) {
 
 function setupVideo(displayCanv, displayOverlay, setupCallback) {
     window.videoElem = document.createElement("video");
+    window.videoElem.setAttribute("autoplay", "");
+    window.videoElem.setAttribute("muted", "");
+    window.videoElem.setAttribute("playsinline", "");
 
     navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" },
@@ -160,17 +163,10 @@ function drawOverlay(landmarks, bbox) {
 
 function processVideo() {
     window.stats.begin();
-
     const [landmarksRaw, bbox] = window.faceDetector.detect(getFrame(), window.width, window.height);
-    // console.log(landmarksRaw)
     const [quat, trans] = window.faceDetector.getPose(landmarksRaw, window.width, window.height);
-    console.log(quat);
-    // console.log(eulerToQuat(euler[0], euler[1], euler[2]));
-
     drawOverlay(landmarksRaw, bbox);
-
     window.stats.end();
-
     requestAnimationFrame(processVideo);
 }
 

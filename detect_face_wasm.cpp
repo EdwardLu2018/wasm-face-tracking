@@ -65,7 +65,7 @@ uint16_t *detect_face_features(unsigned char srcData[], size_t srcCols, size_t s
     uint16_t *parts;
     uint16_t left, top, right, bottom;
 
-    array2d<uint8_t> gray, gray_small;
+    array2d<uint8_t> gray; //, gray_small;
     gray.set_size(srcRows, srcCols);
     // gray_small.set_size(srcRows / DOWNSAMPLE_RATIO, srcCols / DOWNSAMPLE_RATIO);
 
