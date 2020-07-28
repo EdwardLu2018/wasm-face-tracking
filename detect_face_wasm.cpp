@@ -57,7 +57,7 @@ void pose_model_init(char buf[], size_t buf_len) {
 }
 
 EMSCRIPTEN_KEEPALIVE
-uint16_t *detect_face_features(unsigned char srcData[], size_t srcCols, size_t srcRows) {
+uint16_t *detect_face_features(uchar srcData[], size_t srcCols, size_t srcRows) {
     static std::vector<dlib::rectangle> d;
     static full_object_detection shape;
 
@@ -75,10 +75,10 @@ uint16_t *detect_face_features(unsigned char srcData[], size_t srcCols, size_t s
             idx = (i * srcCols * 4) + j * 4;
 
             // rgba to rgb
-            unsigned char r = srcData[idx];
-            unsigned char g = srcData[idx + 1];
-            unsigned char b = srcData[idx + 2];
-            // unsigned char a = srcData[idx + 3];
+            uchar r = srcData[idx];
+            uchar g = srcData[idx + 1];
+            uchar b = srcData[idx + 2];
+            // uchar a = srcData[idx + 3];
 
             // turn src image to gray scale
             gray[i][j] = (0.30 * r) + (0.59 * g) + (0.11 * b);
@@ -120,7 +120,7 @@ uint16_t *detect_face_features(unsigned char srcData[], size_t srcCols, size_t s
 }
 
 EMSCRIPTEN_KEEPALIVE
-double *get_pose(unsigned char landmarks[], size_t srcCols, size_t srcRows) {
+double *get_pose(uint16_t landmarks[], size_t srcCols, size_t srcRows) {
     static bool first_iter = true;
 
     static Mat camera_matrix, distortion;
@@ -134,7 +134,7 @@ double *get_pose(unsigned char landmarks[], size_t srcCols, size_t srcRows) {
     static std::vector<Point2d> image_pts;
 
     uint8_t result_len;
-    double *result, *quat;
+    double *result;
     double x, y, z;
 
     if (first_iter) {
@@ -181,15 +181,9 @@ double *get_pose(unsigned char landmarks[], size_t srcCols, size_t srcRows) {
     result[3] = cos(x/2) * cos(y/2) * sin(z/2) - sin(x/2) * sin(y/2) * cos(z/2);
     result[4] = cos(x/2) * cos(y/2) * cos(z/2) + sin(x/2) * sin(y/2) * sin(z/2);
 
-    delete [] quat;
-
     result[5] = trans_vec.at<double>(0);
     result[6] = trans_vec.at<double>(1);
     result[7] = trans_vec.at<double>(2);
-
-    // printf("%f %f %f\n", euler_angle.at<double>(0), euler_angle.at<double>(1), euler_angle.at<double>(2));
-    // printf("%f %f %f\n", rot_vec.at<double>(0), rot_vec.at<double>(1), rot_vec.at<double>(2));
-    // printf("%f %f %f\n", trans_vec.at<double>(0), trans_vec.at<double>(1), trans_vec.at<double>(2));
 
     return result;
 }

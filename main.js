@@ -1,4 +1,4 @@
-let width = Math.min(window.innerWidth, window.innerHeight);
+let width = 320// Math.min(window.innerWidth, window.innerHeight);
 
 function initStats() {
     window.stats = new Stats();
@@ -33,7 +33,7 @@ function setupVideo(displayCanv, displayOverlay, setupCallback) {
 
     window.videoCanv = document.createElement("canvas");
     setVideoStyle(window.videoCanv);
-    window.videoCanv.style.zIndex = 100;
+    window.videoCanv.style.zIndex = -1;
     if (displayCanv) {
         document.body.appendChild(window.videoCanv);
     }
@@ -41,7 +41,7 @@ function setupVideo(displayCanv, displayOverlay, setupCallback) {
     if (displayOverlay) {
         window.overlayCanv = document.createElement("canvas");
         setVideoStyle(window.overlayCanv);
-        window.overlayCanv.style.zIndex = 200;
+        window.overlayCanv.style.zIndex = 0;
         document.body.appendChild(window.overlayCanv);
     }
 
@@ -54,6 +54,8 @@ function setupVideo(displayCanv, displayOverlay, setupCallback) {
 
         window.videoCanv.width = window.width;
         window.videoCanv.height = window.height;
+        window.videoCanv.getContext('2d').translate(window.width, 0);
+        window.videoCanv.getContext('2d').scale(-1, 1);
 
         if (displayOverlay) {
             window.overlayCanv.width = window.width;

@@ -48,15 +48,15 @@ class FaceDetector {
         const im_ptr = this._Module._malloc(im_arr.length);
         this._Module.HEAPU8.set(im_arr, im_ptr);
 
-        console.time("detect_face_features");
+        // console.time("detect_face_features");
         const ptr = this._Module.ccall(
             "detect_face_features",
             "number",
             ["number", "number", "number"],
             [im_ptr, width, height]
         );
-        console.timeEnd("detect_face_features");
         const ptrU16 = ptr / Uint16Array.BYTES_PER_ELEMENT
+        // console.timeEnd("detect_face_features");
 
         const len = this._Module.HEAPU16[ptrU16];
 
@@ -81,8 +81,8 @@ class FaceDetector {
     getPose(parts_arr, width, height) {
         if (!this.ready) return [null, null];
 
-        const parts_ptr = this._Module._malloc(parts_arr.length);
-        this._Module.HEAPU8.set(parts_arr, parts_ptr);
+        const parts_ptr = this._Module._malloc(parts_arr.length * Uint16Array.BYTES_PER_ELEMENT);
+        this._Module.HEAPU16.set(parts_arr, parts_ptr / Uint16Array.BYTES_PER_ELEMENT);
 
         const ptr = this._Module.ccall(
             "get_pose",
