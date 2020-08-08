@@ -1,13 +1,13 @@
 class FaceDetector {
-    constructor(callback) {
+    constructor(init_callback, req_callback) {
         let _this = this;
         this.ready = false;
         FaceDetectorWasm().then(function (Module) {
             console.log("Face Detector WASM module loaded.");
             _this.onWasmInit(Module);
-            _this.getPoseModel();
-            if (callback) {
-                callback();
+            _this.getPoseModel(req_callback);
+            if (init_callback) {
+                init_callback();
             }
         });
     }
@@ -16,13 +16,16 @@ class FaceDetector {
         this._Module = Module;
     }
 
-    getPoseModel(Module) {
+    getPoseModel(req_callback) {
         const req = new XMLHttpRequest();
         req.open("GET", "/shape_predictor_68_face_landmarks.dat", true);
         req.responseType = "arraybuffer";
         req.onload = (e) => {
             const payload = req.response;
             if (payload) {
+                if (req_callback) {
+                    req_callback();
+                }
                 this.poseModelInit(payload);
                 this.ready = true;
             }

@@ -1,4 +1,4 @@
-let width = 320// Math.min(window.innerWidth, window.innerHeight);
+let width = 320; // Math.min(window.innerWidth, window.innerHeight);
 
 function initStats() {
     window.stats = new Stats();
@@ -85,7 +85,7 @@ function drawPolyline(landmarks, start, end, closed) {
 
     overlayCtx.beginPath();
     overlayCtx.strokeStyle = 'blue';
-    overlayCtx.lineWidth = 2;
+    overlayCtx.lineWidth = 1;
 
     overlayCtx.moveTo(landmarks[start][0], landmarks[start][1]);
     for (let i = start + 1; i <= end; i++) {
@@ -102,7 +102,7 @@ function drawBbox(bbox) {
 
     overlayCtx.beginPath();
     overlayCtx.strokeStyle = "red";
-    overlayCtx.lineWidth = 2;
+    overlayCtx.lineWidth = 1;
 
     // [x1,y1,x2,y2]
     overlayCtx.moveTo(bbox[0], bbox[1]);
@@ -178,7 +178,11 @@ function init() {
         setupVideo(true, true, () => {
             requestAnimationFrame(processVideo);
         });
-    });
+    },
+    () => {
+        console.log("Downloaded model!")
+    }
+    );
 }
 
 init();
