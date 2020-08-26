@@ -18,7 +18,7 @@ class FaceDetector {
 
     getPoseModel(req_callback) {
         const req = new XMLHttpRequest();
-        req.open("GET", "/shape_predictor_68_face_landmarks.dat", true);
+        req.open("GET", "/face_landmarks_68_compressed.dat", true);
         req.responseType = "arraybuffer";
         req.onload = (e) => {
             const payload = req.response;
@@ -58,7 +58,7 @@ class FaceDetector {
             ["number", "number", "number"],
             [im_ptr, width, height]
         );
-        const ptrU16 = ptr / Uint16Array.BYTES_PER_ELEMENT
+        const ptrU16 = ptr / Uint16Array.BYTES_PER_ELEMENT;
         // console.timeEnd("detect_face_features");
 
         const len = this._Module.HEAPU16[ptrU16];

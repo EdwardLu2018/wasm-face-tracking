@@ -12,7 +12,10 @@
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_transforms.h>
 
-#define PI  3.14159265
+#include <dlib/external/zlib/zlib.h>
+
+#define PI          3.14159265
+#define MODEL_SIZE  99693937
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,11 +34,27 @@ EMSCRIPTEN_KEEPALIVE
 void pose_model_init(char buf[], size_t buf_len) {
     detector = get_frontal_face_detector();
 
-    std::string model(buf, buf_len);
+    char *decompressed = new char[MODEL_SIZE];
+
+    z_stream stream;
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+    stream.avail_in = buf_len;
+    stream.next_in = (Bytef *)buf;
+    stream.avail_out = MODEL_SIZE;
+    stream.next_out = (Bytef *)decompressed;
+
+    inflateInit(&stream);
+    inflate(&stream, Z_NO_FLUSH);
+    inflateEnd(&stream);
+
+    std::string model(decompressed, stream.total_out);
     std::istringstream model_istringstream(model);
     deserialize(pose_model, model_istringstream);
 
     delete [] buf;
+    delete [] decompressed;
 
     model_points.push_back( Point3d(6.825897, 6.760612, 4.402142) );
     model_points.push_back( Point3d(1.330353, 7.122144, 6.903745) );
@@ -52,7 +71,7 @@ void pose_model_init(char buf[], size_t buf_len) {
     model_points.push_back( Point3d(0.000000, -3.116408, 6.097667) );
     model_points.push_back( Point3d(0.000000, -7.415691, 4.070434) );
 
-    cout << "Ready to detect!\n";
+    cout << "Ready to detect!" << endl;
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -63,7 +82,7 @@ uint16_t *detect_face_features(uchar srcData[], size_t srcCols, size_t srcRows) 
 
     const uint8_t parts_len = 5 + 2 * 68;
     uint16_t *parts = new uint16_t[parts_len];
-    uint16_t left, top, right, bottom;
+    int left, top, right, bottom;
 
     array2d<uint8_t> gray;
     gray.set_size(srcRows, srcCols);
@@ -137,7 +156,7 @@ uint16_t *detect_face_features(uchar srcData[], size_t srcCols, size_t srcRows) 
 
     parts[0] = parts_len; // set first idx to len when passed to js
 
-    if (++frames % 60 == 0) {
+    if (++frames % 15 == 0) {
         track = false;
     }
 
