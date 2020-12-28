@@ -4,7 +4,6 @@
 #include <emscripten/emscripten.h>
 
 #include <dlib/opencv.h>
-#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -14,8 +13,9 @@
 
 #include <dlib/external/zlib/zlib.h>
 
-#define PI          3.14159265
-#define MODEL_SIZE  99693937
+#define PI                  3.14159265
+#define FRAME_SKIP_RATE     10
+#define MODEL_SIZE          99693937
 
 #ifdef __cplusplus
 extern "C" {
@@ -156,7 +156,7 @@ uint16_t *detect_face_features(uchar srcData[], size_t srcCols, size_t srcRows) 
 
     parts[0] = parts_len; // set first idx to len when passed to js
 
-    if (++frames % 15 == 0) {
+    if (++frames % FRAME_SKIP_RATE == 0) {
         track = false;
     }
 

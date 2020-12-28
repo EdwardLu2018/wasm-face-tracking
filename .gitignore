@@ -1,3 +1,6 @@
 .DS_Store
 build/
+emsdk/
+dlib/
+opencv/
 emsdk_set_env.sh
