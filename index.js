@@ -1,6 +1,3 @@
-import { GrayScale } from "./grayscale.js"
-import { FaceTracker } from "./faceTracker.js"
-
 let width = 320; // window.innerWidth;
 let height = 240; // window.innerHeight;
 
@@ -141,7 +138,7 @@ window.onload = () => {
     overlayCanvas.style.zIndex = 9999;
     document.body.appendChild(overlayCanvas);
 
-    faceTracker = new FaceTracker(video, width, height, canvas);
+    faceTracker = new ARENAFaceTracker.FaceTracker(video, width, height, canvas);
     faceTracker.requestStream()
         .then(() => {
             initStats();
