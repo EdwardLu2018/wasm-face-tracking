@@ -3,13 +3,12 @@ const webpack = require("webpack");
 const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = (env, argv) => ({
-  entry: './index.js',
+  entry: './faceTracker.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: argv.mode == 'development' ? 'arena-face-tracker.js' : 'arena-face-tracker.min.js',
     library: 'ARENAFaceTracker',
-    libraryTarget: 'var',
-    libraryExport: 'default',
+    libraryTarget: 'umd',
     globalObject: 'typeof self !== \'undefined\' ? self : this',
   },
   mode: argv.mode == 'development' ? 'development' : 'production',
