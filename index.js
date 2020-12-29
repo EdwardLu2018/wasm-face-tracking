@@ -8,7 +8,7 @@ let stats = null;
 let grayscale = null;
 let faceTracker = null;
 
-let overlayCanv = null;
+let overlayCanvas = null;
 
 const OVERLAY_COLOR = "#ef2d5e";
 
@@ -24,33 +24,8 @@ function setVideoStyle(elem) {
     elem.style.left = 0;
 }
 
-function setupVideo() {
-    return new Promise((resolve, reject) => {
-        let video = document.createElement("video");
-        video.setAttribute("autoplay", "");
-        video.setAttribute("muted", "");
-        video.setAttribute("playsinline", "");
-        // document.body.appendChild(video);
-
-        let canvas = document.createElement("canvas");
-        canvas.style.zIndex = 9998;
-        setVideoStyle(canvas);
-        document.body.appendChild(canvas);
-
-        grayscale = new GrayScale(video, width, height, canvas);
-        grayscale.requestStream()
-            .then(() => {
-                resolve();
-            })
-            .catch(err => {
-                console.warn("ERROR: " + err);
-                reject();
-            });
-    });
-}
-
 function drawPolyline(landmarks, start, end, closed) {
-    const overlayCtx = overlayCanv.getContext("2d");
+    const overlayCtx = overlayCanvas.getContext("2d");
 
     overlayCtx.beginPath();
     overlayCtx.strokeStyle = 'blue';
@@ -67,7 +42,7 @@ function drawPolyline(landmarks, start, end, closed) {
 }
 
 function writeOverlayText(text) {
-    const overlayCtx = overlayCanv.getContext("2d");
+    const overlayCtx = overlayCanvas.getContext("2d");
     overlayCtx.clearRect(
         0, 0,
         width,
@@ -76,11 +51,11 @@ function writeOverlayText(text) {
     overlayCtx.font = "17px Arial";
     overlayCtx.textAlign = "center";
     overlayCtx.fillStyle = OVERLAY_COLOR;
-    overlayCtx.fillText(text, overlayCanv.width/2, overlayCanv.height/8);
+    overlayCtx.fillText(text, overlayCanvas.width/2, overlayCanvas.height/8);
 }
 
 function drawBbox(bbox) {
-    const overlayCtx = overlayCanv.getContext("2d");
+    const overlayCtx = overlayCanvas.getContext("2d");
 
     overlayCtx.beginPath();
     overlayCtx.strokeStyle = "red";
@@ -100,7 +75,7 @@ function drawFeatures(features) {
     const bbox = features.bbox
     const landmarks = features.landmarks;
 
-    const overlayCtx = overlayCanv.getContext("2d");
+    const overlayCtx = overlayCanvas.getContext("2d");
     overlayCtx.clearRect(
         0, 0,
         width,
@@ -129,8 +104,7 @@ function drawFeatures(features) {
 function processVideo() {
     stats.begin();
 
-    const features = faceTracker.detectFeatures(grayscale.getFrame());
-
+    const features = faceTracker.detectFeatures();
     const pose = faceTracker.getPose(features.landmarks);
     // const rotation = pose.rotation;
     // const translation = pose.translation;
@@ -148,20 +122,32 @@ window.addEventListener("faceModelDownloadProgress", e => {
 }, false);
 
 window.onload = () => {
-    overlayCanv = document.createElement("canvas");
-    setVideoStyle(overlayCanv);
-    overlayCanv.id = "overlay";
-    overlayCanv.width = width;
-    overlayCanv.height = height;
-    overlayCanv.style.zIndex = 9999;
-    document.body.appendChild(overlayCanv);
+    let video = document.createElement("video");
+    video.setAttribute("autoplay", "");
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    // document.body.appendChild(video);
 
-    faceTracker = new FaceTracker(width, height,
-        () => {
+    let canvas = document.createElement("canvas");
+    canvas.style.zIndex = 9998;
+    setVideoStyle(canvas);
+    document.body.appendChild(canvas);
+
+    overlayCanvas = document.createElement("canvas");
+    setVideoStyle(overlayCanvas);
+    overlayCanvas.id = "overlay";
+    overlayCanvas.width = width;
+    overlayCanvas.height = height;
+    overlayCanvas.style.zIndex = 9999;
+    document.body.appendChild(overlayCanvas);
+
+    faceTracker = new FaceTracker(video, width, height, canvas);
+    faceTracker.requestStream()
+        .then(() => {
             initStats();
-            setupVideo().then(() => {
-                requestAnimationFrame(processVideo);
-            });
-        }
-    );
+            requestAnimationFrame(processVideo);
+        })
+        .catch(err => {
+            console.warn("ERROR: " + err);
+        });
 }

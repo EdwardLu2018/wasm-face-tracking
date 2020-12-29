@@ -1,10 +1,14 @@
+import { GrayScale } from "./grayscale.js"
+
 export class FaceTracker {
-    constructor(width, height, init_callback) {
+    constructor(video, width, height, canvas) {
         let _this = this;
         this._ready = false;
 
+        this._video = video;
         this._width = width;
         this._height = height;
+        this._canvas = canvas;
 
         this._bboxLength = 4;
         this._landmarksLength = 2 * 68;
@@ -13,11 +17,12 @@ export class FaceTracker {
         this._transLength = 3;
         this._poseLength = this._rotLength + this._transLength;
 
+        this._grayscale = new GrayScale(this._video, this._width, this._height, this._canvas);
+
         FaceDetectorWasm().then(function (Module) {
             console.log("Face Detector WASM module loaded.");
             _this.onWasmInit(Module);
-            _this.getPoseModel();
-            if (init_callback) init_callback();
+            _this.getShapePredictor();
         });
     }
 
@@ -32,24 +37,35 @@ export class FaceTracker {
         this.landmarksPtr = this._Module._malloc(this._landmarksLength * Uint16Array.BYTES_PER_ELEMENT);
     }
 
-    getPoseModel(download_callback) {
+    requestStream() {
+        return new Promise((resolve, reject) => {
+            this._grayscale.requestStream()
+                    .then(() => {
+                        resolve();
+                    })
+                    .catch(err => {
+                        reject(err);
+                    });
+        });
+    }
+
+    getShapePredictor() {
         const req = new XMLHttpRequest();
-        req.addEventListener('progress', this.poseModelProgress);
+        req.addEventListener('progress', this.shapePredictorProgress);
         req.open("GET", "/shape_predictor_68_face_landmarks_compressed.dat", true);
         req.responseType = "arraybuffer";
         req.onload = e => {
             const payload = req.response;
             if (payload) {
-                this.poseModelInit(payload);
+                this.shapePredictorInit(payload);
                 this._ready = true;
             }
         }
         req.send(null);
     }
 
-    poseModelProgress(e) {
+    shapePredictorProgress(e) {
         if (e.lengthComputable) {
-            // var percentage = (e.loaded / e.total) * 100;
             const downloadEvent = new CustomEvent("faceModelDownloadProgress", {
                 detail: (e.loaded / e.total) * 100
             });
@@ -60,16 +76,17 @@ export class FaceTracker {
         }
     }
 
-    poseModelInit(data) {
+    shapePredictorInit(data) {
         const model = new Uint8Array(data);
         const buf = this._Module._malloc(model.length);
         this._Module.HEAPU8.set(model, buf);
         this.initializeShapePredictor(buf, model.length);
     }
 
-    detectFeatures(im) {
+    detectFeatures() {
         if (!this._ready) undefined;
 
+        const im = this._grayscale.getFrame();
         this._Module.HEAPU8.set(im, this.imBuf);
 
         // console.time("features");

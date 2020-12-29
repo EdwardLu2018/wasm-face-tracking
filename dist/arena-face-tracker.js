@@ -1,4 +1,4 @@
-var WasmAR =
+var ARENAFaceTracker =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -97,27 +97,30 @@ var WasmAR =
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "FaceTracker", function() { return FaceTracker; });
+/* harmony import */ var _grayscale_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./grayscale.js */ "./grayscale.js");
+
 class FaceTracker {
-  constructor(width, height, init_callback) {
+  constructor(video, width, height, canvas) {
     let _this = this;
 
     this._ready = false;
+    this._video = video;
     this._width = width;
     this._height = height;
+    this._canvas = canvas;
     this._bboxLength = 4;
     this._landmarksLength = 2 * 68;
     this._featuresLength = this._landmarksLength + this._bboxLength;
     this._rotLength = 4;
     this._transLength = 3;
     this._poseLength = this._rotLength + this._transLength;
+    this._grayscale = new _grayscale_js__WEBPACK_IMPORTED_MODULE_0__["GrayScale"](this._video, this._width, this._height, this._canvas);
     FaceDetectorWasm().then(function (Module) {
       console.log("Face Detector WASM module loaded.");
 
       _this.onWasmInit(Module);
 
-      _this.getPoseModel();
-
-      if (init_callback) init_callback();
+      _this.getShapePredictor();
     });
   }
 
@@ -130,9 +133,19 @@ class FaceTracker {
     this.landmarksPtr = this._Module._malloc(this._landmarksLength * Uint16Array.BYTES_PER_ELEMENT);
   }
 
-  getPoseModel(download_callback) {
+  requestStream() {
+    return new Promise((resolve, reject) => {
+      this._grayscale.requestStream().then(() => {
+        resolve();
+      }).catch(err => {
+        reject(err);
+      });
+    });
+  }
+
+  getShapePredictor() {
     const req = new XMLHttpRequest();
-    req.addEventListener('progress', this.poseModelProgress);
+    req.addEventListener('progress', this.shapePredictorProgress);
     req.open("GET", "/shape_predictor_68_face_landmarks_compressed.dat", true);
     req.responseType = "arraybuffer";
 
@@ -140,7 +153,7 @@ class FaceTracker {
       const payload = req.response;
 
       if (payload) {
-        this.poseModelInit(payload);
+        this.shapePredictorInit(payload);
         this._ready = true;
       }
     };
@@ -148,9 +161,8 @@ class FaceTracker {
     req.send(null);
   }
 
-  poseModelProgress(e) {
+  shapePredictorProgress(e) {
     if (e.lengthComputable) {
-      // var percentage = (e.loaded / e.total) * 100;
       const downloadEvent = new CustomEvent("faceModelDownloadProgress", {
         detail: e.loaded / e.total * 100
       });
@@ -160,7 +172,7 @@ class FaceTracker {
     }
   }
 
-  poseModelInit(data) {
+  shapePredictorInit(data) {
     const model = new Uint8Array(data);
 
     const buf = this._Module._malloc(model.length);
@@ -170,8 +182,10 @@ class FaceTracker {
     this.initializeShapePredictor(buf, model.length);
   }
 
-  detectFeatures(im) {
+  detectFeatures() {
     if (!this._ready) undefined;
+
+    const im = this._grayscale.getFrame();
 
     this._Module.HEAPU8.set(im, this.imBuf); // console.time("features");
 
@@ -323,7 +337,7 @@ class GrayScale {
           resolve(this._source, stream);
         };
       }).catch(err => {
-        console.warn("ERROR: " + err);
+        reject(err);
       });
     });
   }
@@ -352,7 +366,7 @@ let height = 240; // window.innerHeight;
 let stats = null;
 let grayscale = null;
 let faceTracker = null;
-let overlayCanv = null;
+let overlayCanvas = null;
 const OVERLAY_COLOR = "#ef2d5e";
 
 function initStats() {
@@ -367,29 +381,8 @@ function setVideoStyle(elem) {
   elem.style.left = 0;
 }
 
-function setupVideo() {
-  return new Promise((resolve, reject) => {
-    let video = document.createElement("video");
-    video.setAttribute("autoplay", "");
-    video.setAttribute("muted", "");
-    video.setAttribute("playsinline", ""); // document.body.appendChild(video);
-
-    let canvas = document.createElement("canvas");
-    canvas.style.zIndex = 9998;
-    setVideoStyle(canvas);
-    document.body.appendChild(canvas);
-    grayscale = new _grayscale_js__WEBPACK_IMPORTED_MODULE_0__["GrayScale"](video, width, height, canvas);
-    grayscale.requestStream().then(() => {
-      resolve();
-    }).catch(err => {
-      console.warn("ERROR: " + err);
-      reject();
-    });
-  });
-}
-
 function drawPolyline(landmarks, start, end, closed) {
-  const overlayCtx = overlayCanv.getContext("2d");
+  const overlayCtx = overlayCanvas.getContext("2d");
   overlayCtx.beginPath();
   overlayCtx.strokeStyle = 'blue';
   overlayCtx.lineWidth = 1;
@@ -407,16 +400,16 @@ function drawPolyline(landmarks, start, end, closed) {
 }
 
 function writeOverlayText(text) {
-  const overlayCtx = overlayCanv.getContext("2d");
+  const overlayCtx = overlayCanvas.getContext("2d");
   overlayCtx.clearRect(0, 0, width, height);
   overlayCtx.font = "17px Arial";
   overlayCtx.textAlign = "center";
   overlayCtx.fillStyle = OVERLAY_COLOR;
-  overlayCtx.fillText(text, overlayCanv.width / 2, overlayCanv.height / 8);
+  overlayCtx.fillText(text, overlayCanvas.width / 2, overlayCanvas.height / 8);
 }
 
 function drawBbox(bbox) {
-  const overlayCtx = overlayCanv.getContext("2d");
+  const overlayCtx = overlayCanvas.getContext("2d");
   overlayCtx.beginPath();
   overlayCtx.strokeStyle = "red";
   overlayCtx.lineWidth = 1; // [x1,y1,x2,y2]
@@ -432,7 +425,7 @@ function drawBbox(bbox) {
 function drawFeatures(features) {
   const bbox = features.bbox;
   const landmarks = features.landmarks;
-  const overlayCtx = overlayCanv.getContext("2d");
+  const overlayCtx = overlayCanvas.getContext("2d");
   overlayCtx.clearRect(0, 0, width, height);
   let landmarksFormatted = [];
 
@@ -463,7 +456,7 @@ function drawFeatures(features) {
 
 function processVideo() {
   stats.begin();
-  const features = faceTracker.detectFeatures(grayscale.getFrame());
+  const features = faceTracker.detectFeatures();
   const pose = faceTracker.getPose(features.landmarks); // const rotation = pose.rotation;
   // const translation = pose.translation;
 
@@ -478,18 +471,28 @@ window.addEventListener("faceModelDownloadProgress", e => {
 }, false);
 
 window.onload = () => {
-  overlayCanv = document.createElement("canvas");
-  setVideoStyle(overlayCanv);
-  overlayCanv.id = "overlay";
-  overlayCanv.width = width;
-  overlayCanv.height = height;
-  overlayCanv.style.zIndex = 9999;
-  document.body.appendChild(overlayCanv);
-  faceTracker = new _faceTracker_js__WEBPACK_IMPORTED_MODULE_1__["FaceTracker"](width, height, () => {
+  let video = document.createElement("video");
+  video.setAttribute("autoplay", "");
+  video.setAttribute("muted", "");
+  video.setAttribute("playsinline", ""); // document.body.appendChild(video);
+
+  let canvas = document.createElement("canvas");
+  canvas.style.zIndex = 9998;
+  setVideoStyle(canvas);
+  document.body.appendChild(canvas);
+  overlayCanvas = document.createElement("canvas");
+  setVideoStyle(overlayCanvas);
+  overlayCanvas.id = "overlay";
+  overlayCanvas.width = width;
+  overlayCanvas.height = height;
+  overlayCanvas.style.zIndex = 9999;
+  document.body.appendChild(overlayCanvas);
+  faceTracker = new _faceTracker_js__WEBPACK_IMPORTED_MODULE_1__["FaceTracker"](video, width, height, canvas);
+  faceTracker.requestStream().then(() => {
     initStats();
-    setupVideo().then(() => {
-      requestAnimationFrame(processVideo);
-    });
+    requestAnimationFrame(processVideo);
+  }).catch(err => {
+    console.warn("ERROR: " + err);
   });
 };
 

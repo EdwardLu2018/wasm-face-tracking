@@ -115,7 +115,7 @@ export class GrayScale
                 };
             })
             .catch(err => {
-                console.warn("ERROR: " + err);
+                reject(err);
             });
         });
     }
