@@ -19,5 +19,3 @@ else
     cd build
     make
 fi
-
-cp detect_face_wasm.* ..
