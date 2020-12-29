@@ -2,10 +2,9 @@ let width = 320; // window.innerWidth;
 let height = 240; // window.innerHeight;
 
 let stats = null;
-let grayscale = null;
 let faceTracker = null;
 
-let overlayCanvas = null;
+let overlayCanv = null;
 
 const OVERLAY_COLOR = "#ef2d5e";
 
@@ -22,7 +21,7 @@ function setVideoStyle(elem) {
 }
 
 function drawPolyline(landmarks, start, end, closed) {
-    const overlayCtx = overlayCanvas.getContext("2d");
+    const overlayCtx = overlayCanv.getContext("2d");
 
     overlayCtx.beginPath();
     overlayCtx.strokeStyle = 'blue';
@@ -39,7 +38,7 @@ function drawPolyline(landmarks, start, end, closed) {
 }
 
 function writeOverlayText(text) {
-    const overlayCtx = overlayCanvas.getContext("2d");
+    const overlayCtx = overlayCanv.getContext("2d");
     overlayCtx.clearRect(
         0, 0,
         width,
@@ -48,11 +47,11 @@ function writeOverlayText(text) {
     overlayCtx.font = "17px Arial";
     overlayCtx.textAlign = "center";
     overlayCtx.fillStyle = OVERLAY_COLOR;
-    overlayCtx.fillText(text, overlayCanvas.width/2, overlayCanvas.height/8);
+    overlayCtx.fillText(text, overlayCanv.width/2, overlayCanv.height/8);
 }
 
 function drawBbox(bbox) {
-    const overlayCtx = overlayCanvas.getContext("2d");
+    const overlayCtx = overlayCanv.getContext("2d");
 
     overlayCtx.beginPath();
     overlayCtx.strokeStyle = "red";
@@ -72,7 +71,7 @@ function drawFeatures(features) {
     const bbox = features.bbox
     const landmarks = features.landmarks;
 
-    const overlayCtx = overlayCanvas.getContext("2d");
+    const overlayCtx = overlayCanv.getContext("2d");
     overlayCtx.clearRect(
         0, 0,
         width,
@@ -130,13 +129,13 @@ window.onload = () => {
     setVideoStyle(canvas);
     document.body.appendChild(canvas);
 
-    overlayCanvas = document.createElement("canvas");
-    setVideoStyle(overlayCanvas);
-    overlayCanvas.id = "overlay";
-    overlayCanvas.width = width;
-    overlayCanvas.height = height;
-    overlayCanvas.style.zIndex = 9999;
-    document.body.appendChild(overlayCanvas);
+    overlayCanv = document.createElement("canvas");
+    setVideoStyle(overlayCanv);
+    overlayCanv.id = "overlay";
+    overlayCanv.width = width;
+    overlayCanv.height = height;
+    overlayCanv.style.zIndex = 9999;
+    document.body.appendChild(overlayCanv);
 
     faceTracker = new ARENAFaceTracker.FaceTracker(video, width, height, canvas);
     faceTracker.requestStream()

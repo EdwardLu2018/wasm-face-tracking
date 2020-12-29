@@ -87,9 +87,24 @@ uint16_t *detect_face_features(uchar pixels[], size_t cols, size_t rows) {
 
     uint16_t *features = new uint16_t[FEATURES_LEN];
 
-    // convert pixels to cv Mat and then to dlib cv_image
-    Mat grayIm = Mat(rows, cols, CV_8UC1, pixels);
-    cv_image<uint8_t> gray(grayIm);
+    array2d<uint8_t> gray;
+    gray.set_size(rows, cols);
+
+    uint32_t idx;
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            idx = (i * cols * 4) + j * 4;
+
+            // rgba to rgb
+            uchar r = pixels[idx];
+            uchar g = pixels[idx + 1];
+            uchar b = pixels[idx + 2];
+            // uchar a = pixels[idx + 3];
+
+            // turn src image to gray scale
+            gray[i][j] = (0.30 * r) + (0.59 * g) + (0.11 * b);
+        }
+    }
 
     dlib::rectangle face_rect;
     if (!track) {

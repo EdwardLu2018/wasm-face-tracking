@@ -1306,11 +1306,11 @@ function updateGlobalBufferAndViews(buf) {
 }
 
 var STATIC_BASE = 1024,
-    STACK_BASE = 6104848,
+    STACK_BASE = 6103728,
     STACKTOP = STACK_BASE,
-    STACK_MAX = 861968,
-    DYNAMIC_BASE = 6104848,
-    DYNAMICTOP_PTR = 861808;
+    STACK_MAX = 860848,
+    DYNAMIC_BASE = 6103728,
+    DYNAMICTOP_PTR = 860688;
 
 
 
@@ -1791,7 +1791,7 @@ var ASM_CONSTS = {
 
 
 
-// STATICTOP = STATIC_BASE + 860944;
+// STATICTOP = STATIC_BASE + 859824;
 /* global initializers */  __ATINIT__.push({ func: function() { ___wasm_call_ctors() } });
 
 
@@ -4464,7 +4464,7 @@ var ASM_CONSTS = {
     }
 
   function _emscripten_get_sbrk_ptr() {
-      return 861808;
+      return 860688;
     }
 
   function _emscripten_memcpy_big(dest, src, num) {
