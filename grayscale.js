@@ -1,4 +1,4 @@
-export class GrayScale
+export class GrayScaleMedia
 {
     constructor(source, width, height, canvas) {
         this._source = source;
@@ -111,7 +111,7 @@ export class GrayScale
                 this._source.srcObject = stream;
                 this._source.onloadedmetadata = e => {
                     this._source.play();
-                    resolve(this._source, stream);
+                    resolve(this._source);
                 };
             })
             .catch(err => {

@@ -91,39 +91,57 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./faceTracker.js");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./face-tracker-lib.js");
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ "./faceTracker.js":
-/*!************************!*\
-  !*** ./faceTracker.js ***!
-  \************************/
+/***/ "./face-tracker-lib.js":
+/*!*****************************!*\
+  !*** ./face-tracker-lib.js ***!
+  \*****************************/
+/*! exports provided: FaceTracker, GrayScaleMedia */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _face_tracker_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./face-tracker.js */ "./face-tracker.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "FaceTracker", function() { return _face_tracker_js__WEBPACK_IMPORTED_MODULE_0__["FaceTracker"]; });
+
+/* harmony import */ var _grayscale_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./grayscale.js */ "./grayscale.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "GrayScaleMedia", function() { return _grayscale_js__WEBPACK_IMPORTED_MODULE_1__["GrayScaleMedia"]; });
+
+
+
+
+
+/***/ }),
+
+/***/ "./face-tracker.js":
+/*!*************************!*\
+  !*** ./face-tracker.js ***!
+  \*************************/
 /*! exports provided: FaceTracker */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "FaceTracker", function() { return FaceTracker; });
-/* harmony import */ var _grayscale_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./grayscale.js */ "./grayscale.js");
-
 class FaceTracker {
-  constructor(video, width, height, canvas) {
+  constructor(width, height, init_callback, progress_callback) {
     let _this = this;
 
-    this._ready = false;
-    this._video = video;
+    this.ready = false;
     this._width = width;
     this._height = height;
-    this._canvas = canvas;
+    this._init_callback = init_callback;
+    this._progress_callback = progress_callback;
     this._bboxLength = 4;
     this._landmarksLength = 2 * 68;
     this._featuresLength = this._landmarksLength + this._bboxLength;
     this._rotLength = 4;
     this._transLength = 3;
     this._poseLength = this._rotLength + this._transLength;
-    this._grayscale = new _grayscale_js__WEBPACK_IMPORTED_MODULE_0__["GrayScale"](this._video, this._width, this._height, this._canvas);
     FaceDetectorWasm().then(function (Module) {
       console.log("Face Detector WASM module loaded.");
 
@@ -142,19 +160,9 @@ class FaceTracker {
     this.landmarksPtr = this._Module._malloc(this._landmarksLength * Uint16Array.BYTES_PER_ELEMENT);
   }
 
-  requestStream() {
-    return new Promise((resolve, reject) => {
-      this._grayscale.requestStream().then(() => {
-        resolve();
-      }).catch(err => {
-        reject(err);
-      });
-    });
-  }
-
-  getShapePredictor() {
+  getShapePredictor(callback) {
     const req = new XMLHttpRequest();
-    req.addEventListener('progress', this.shapePredictorProgress);
+    req.addEventListener('progress', e => this.shapePredictorProgress(e));
     req.open("GET", "/shape_predictor_68_face_landmarks_compressed.dat", true);
     req.responseType = "arraybuffer";
 
@@ -163,7 +171,6 @@ class FaceTracker {
 
       if (payload) {
         this.shapePredictorInit(payload);
-        this._ready = true;
       }
     };
 
@@ -172,10 +179,11 @@ class FaceTracker {
 
   shapePredictorProgress(e) {
     if (e.lengthComputable) {
-      const downloadEvent = new CustomEvent("faceModelDownloadProgress", {
-        detail: e.loaded / e.total * 100
-      });
-      window.dispatchEvent(downloadEvent);
+      const downloadProgress = e.loaded / e.total * 100;
+
+      if (downloadProgress < 100) {
+        this._progress_callback(downloadProgress);
+      }
     } else {
       console.log("Cannot log face model download progress!");
     }
@@ -189,13 +197,13 @@ class FaceTracker {
     this._Module.HEAPU8.set(model, buf);
 
     this.initializeShapePredictor(buf, model.length);
+
+    this._init_callback();
+
+    this.ready = true;
   }
 
-  detectFeatures() {
-    if (!this._ready) undefined;
-
-    const im = this._grayscale.getFrame();
-
+  detectFeatures(im) {
     this._Module.HEAPU8.set(im, this.imBuf); // console.time("features");
 
 
@@ -214,8 +222,6 @@ class FaceTracker {
   }
 
   getPose(landmarks) {
-    if (!this._ready) return undefined;
-
     this._Module.HEAPU16.set(landmarks, this.landmarksPtr / Uint16Array.BYTES_PER_ELEMENT); // console.time("pose");
 
 
@@ -241,13 +247,13 @@ class FaceTracker {
 /*!**********************!*\
   !*** ./grayscale.js ***!
   \**********************/
-/*! exports provided: GrayScale */
+/*! exports provided: GrayScaleMedia */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GrayScale", function() { return GrayScale; });
-class GrayScale {
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GrayScaleMedia", function() { return GrayScaleMedia; });
+class GrayScaleMedia {
   constructor(source, width, height, canvas) {
     this._source = source;
     this._sourceType = typeof this._source;
@@ -343,7 +349,7 @@ class GrayScale {
         this._source.onloadedmetadata = e => {
           this._source.play();
 
-          resolve(this._source, stream);
+          resolve(this._source);
         };
       }).catch(err => {
         reject(err);

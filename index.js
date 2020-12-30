@@ -1,10 +1,17 @@
-let width = 320; // window.innerWidth;
-let height = 240; // window.innerHeight;
+var width = 320; // window.innerWidth;
+var height = 240; // window.innerHeight;
 
-let stats = null;
-let faceTracker = null;
+var stats = null;
+var grayscale = null;
 
-let overlayCanv = null;
+var videoCanvas = null;
+var overlayCanvas = null;
+var videoSource = null;
+
+var worker = null;
+var imageData = null;
+
+var running = false;
 
 const OVERLAY_COLOR = "#ef2d5e";
 
@@ -14,31 +21,8 @@ function initStats() {
     document.getElementById("stats").appendChild(stats.domElement);
 }
 
-function setVideoStyle(elem) {
-    elem.style.position = "absolute";
-    elem.style.top = 0;
-    elem.style.left = 0;
-}
-
-function drawPolyline(landmarks, start, end, closed) {
-    const overlayCtx = overlayCanv.getContext("2d");
-
-    overlayCtx.beginPath();
-    overlayCtx.strokeStyle = 'blue';
-    overlayCtx.lineWidth = 1;
-
-    overlayCtx.moveTo(landmarks[start][0], landmarks[start][1]);
-    for (let i = start + 1; i <= end; i++) {
-        overlayCtx.lineTo(landmarks[i][0], landmarks[i][1]);
-    }
-    if (closed) {
-        overlayCtx.lineTo(landmarks[start][0], landmarks[start][1]);
-    }
-    overlayCtx.stroke();
-}
-
 function writeOverlayText(text) {
-    const overlayCtx = overlayCanv.getContext("2d");
+    const overlayCtx = overlayCanvas.getContext("2d");
     overlayCtx.clearRect(
         0, 0,
         width,
@@ -47,15 +31,32 @@ function writeOverlayText(text) {
     overlayCtx.font = "17px Arial";
     overlayCtx.textAlign = "center";
     overlayCtx.fillStyle = OVERLAY_COLOR;
-    overlayCtx.fillText(text, overlayCanv.width/2, overlayCanv.height/8);
+    overlayCtx.fillText(text, overlayCanvas.width/2, overlayCanvas.height/8);
+}
+
+function drawPolyline(landmarks, start, end, closed) {
+    const overlayCtx = overlayCanvas.getContext("2d");
+
+    overlayCtx.beginPath();
+    overlayCtx.strokeStyle = OVERLAY_COLOR;
+    overlayCtx.lineWidth = 1.5;
+
+    overlayCtx.moveTo(landmarks[start][0], landmarks[start][1]);
+    for (var i = start + 1; i <= end; i++) {
+        overlayCtx.lineTo(landmarks[i][0], landmarks[i][1]);
+    }
+    if (closed) {
+        overlayCtx.lineTo(landmarks[start][0], landmarks[start][1]);
+    }
+    overlayCtx.stroke();
 }
 
 function drawBbox(bbox) {
-    const overlayCtx = overlayCanv.getContext("2d");
+    const overlayCtx = overlayCanvas.getContext("2d");
 
     overlayCtx.beginPath();
-    overlayCtx.strokeStyle = "red";
-    overlayCtx.lineWidth = 1;
+    overlayCtx.strokeStyle = "blue";
+    overlayCtx.lineWidth = 1.5;
 
     // [x1,y1,x2,y2]
     overlayCtx.moveTo(bbox[0], bbox[1]);
@@ -71,15 +72,11 @@ function drawFeatures(features) {
     const bbox = features.bbox
     const landmarks = features.landmarks;
 
-    const overlayCtx = overlayCanv.getContext("2d");
-    overlayCtx.clearRect(
-        0, 0,
-        width,
-        height
-    );
+    const overlayCtx = overlayCanvas.getContext("2d");
+    overlayCtx.clearRect( 0, 0, width, height );
 
-    let landmarksFormatted = [];
-    for (let i = 0; i < landmarks.length; i += 2) {
+    var landmarksFormatted = [];
+    for (var i = 0; i < landmarks.length; i += 2) {
         const l = [landmarks[i], landmarks[i+1]];
         landmarksFormatted.push(l);
     }
@@ -97,51 +94,141 @@ function drawFeatures(features) {
     drawPolyline(landmarksFormatted, 60, 67, true);    // inner lip
 }
 
-function processVideo() {
+function tick() {
+    if (!running) return;
+
     stats.begin();
 
-    const features = faceTracker.detectFeatures();
-    const pose = faceTracker.getPose(features.landmarks);
-    // const rotation = pose.rotation;
-    // const translation = pose.translation;
-
-    if (features) drawFeatures(features);
+    imageData = grayscale.getFrame();
+    const videoCanvasCtx = videoCanvas.getContext("2d");
+    videoCanvasCtx.drawImage(
+        videoSource,
+        0, 0,
+        width,
+        height
+    );
 
     stats.end();
 
-    requestAnimationFrame(processVideo);
+    requestAnimationFrame(tick);
 }
 
-window.addEventListener("faceModelDownloadProgress", e => {
-    const progress = Math.round(e.detail * 100) / 100;
-    writeOverlayText(`Downloading Face Model: ${progress}%`);
-}, false);
+function onInit(source) {
+    videoSource = source;
+    running = true;
+
+    worker = new Worker("./face-tracker.worker.js");
+    worker.postMessage({ type: "init", width: width, height: height });
+
+    worker.onmessage = function (e) {
+        var msg = e.data;
+        switch (msg.type) {
+            case "loaded": {
+                // console.log("Loaded");
+                writeOverlayText("Initializing face tracking...");
+                break;
+            }
+            case "progress": {
+                const progress = Math.round(msg.progress * 100) / 100;
+                writeOverlayText(`Downloading Face Model: ${progress}%`);
+                break;
+            }
+            case "result": {
+                if (running) {
+                    drawFeatures(msg.features);
+                }
+                // console.log(msg.pose.translation);
+                break;
+            }
+            // case "not found": {
+            //     console.log("No face found");
+            //     break;
+            // }
+            default: {
+                break;
+            }
+        }
+        process();
+    }
+
+    tick();
+    process();
+}
+
+function process() {
+    if (running && imageData) {
+        worker.postMessage({ type: 'process', imagedata: imageData });
+    }
+}
+
+function stop() {
+    if (!running) return;
+    if (videoSource) {
+        const overlayCtx = overlayCanvas.getContext("2d");
+        overlayCtx.clearRect( 0, 0, width, height );
+
+        const tracks = videoSource.srcObject.getTracks();
+        tracks.forEach(function(track) {
+            track.stop();
+        });
+        videoSource.srcObject = null;
+
+        videoCanvas.style.display = "none";
+        running = false;
+    }
+}
+
+function restart() {
+    if (running) return;
+    videoCanvas.style.display = "block";
+    grayscale.requestStream()
+        .then(source => {
+            const overlayCtx = overlayCanvas.getContext("2d");
+            overlayCtx.clearRect( 0, 0, width, height );
+            running = true;
+            tick();
+            process();
+        })
+        .catch(err => {
+            console.warn("ERROR: " + err);
+        });
+}
 
 window.onload = () => {
-    let video = document.createElement("video");
+    function setVideoStyle(elem) {
+        elem.style.position = "absolute";
+        elem.style.borderRadius = "10px";
+        elem.style.top = "15px";
+        elem.style.left = "15px";
+    }
+
+    var video = document.createElement("video");
     video.setAttribute("autoplay", "");
     video.setAttribute("muted", "");
     video.setAttribute("playsinline", "");
     // document.body.appendChild(video);
 
-    let canvas = document.createElement("canvas");
-    canvas.style.zIndex = 9998;
-    setVideoStyle(canvas);
-    document.body.appendChild(canvas);
+    videoCanvas = document.createElement("canvas");
+    setVideoStyle(videoCanvas);
+    videoCanvas.id = "face-tracking-video";
+    videoCanvas.width = width;
+    videoCanvas.height = height;
+    videoCanvas.style.zIndex = 9998;
+    document.body.appendChild(videoCanvas);
 
-    overlayCanv = document.createElement("canvas");
-    setVideoStyle(overlayCanv);
-    overlayCanv.id = "overlay";
-    overlayCanv.width = width;
-    overlayCanv.height = height;
-    overlayCanv.style.zIndex = 9999;
-    document.body.appendChild(overlayCanv);
+    overlayCanvas = document.createElement("canvas");
+    setVideoStyle(overlayCanvas);
+    overlayCanvas.id = "face-tracking-overlay";
+    overlayCanvas.width = width;
+    overlayCanvas.height = height;
+    overlayCanvas.style.zIndex = 9999;
+    document.body.appendChild(overlayCanvas);
 
-    faceTracker = new ARENAFaceTracker.FaceTracker(video, width, height, canvas);
-    faceTracker.requestStream()
-        .then(() => {
+    grayscale = new ARENAFaceTracker.GrayScaleMedia(video, width, height);
+    grayscale.requestStream()
+        .then(source => {
             initStats();
-            requestAnimationFrame(processVideo);
+            onInit(source);
         })
         .catch(err => {
             console.warn("ERROR: " + err);

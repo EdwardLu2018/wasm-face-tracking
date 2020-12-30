@@ -7,13 +7,21 @@
 
         <script type="text/javascript" src="https://threejs.org/examples/js/libs/stats.min.js"></script>
 
-        <script type="text/javascript" src="wasm/detect_face_wasm.js"></script>
         <script type="text/javascript" src="dist/arena-face-tracker.js"></script>
         <script type="text/javascript" src="index.js"></script>
+
+        <style type="text/css">
+            button {
+                position: relative;
+                top: 250px;
+            }
+        </style>
 
         <title>Track and Detect Face Features</title>
     </head>
     <body>
         <div id="stats"></div>
+        <button id="restart" onclick="restart()">Restart</button>
+        <button id="stop" onclick="stop()">Stop</button>
     </body>
 </html>
