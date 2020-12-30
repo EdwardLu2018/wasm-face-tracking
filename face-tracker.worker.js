@@ -14,6 +14,9 @@ if ('function' === typeof importScripts) {
                 process();
                 return;
             }
+            default: {
+                break;
+            }
         }
     };
 

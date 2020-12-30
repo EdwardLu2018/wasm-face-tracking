@@ -1,13 +1,17 @@
-let width = 320; // window.innerWidth;
-let height = 240; // window.innerHeight;
+var width = 320; // window.innerWidth;
+var height = 240; // window.innerHeight;
 
-let stats = null;
-let grayscale = null;
+var stats = null;
+var grayscale = null;
 
-let overlayCanvas = null;
+var videoCanvas = null;
+var overlayCanvas = null;
+var videoSource = null;
 
-let worker = null;
-let imageData = null;
+var worker = null;
+var imageData = null;
+
+var running = false;
 
 const OVERLAY_COLOR = "#ef2d5e";
 
@@ -15,29 +19,6 @@ function initStats() {
     stats = new Stats();
     stats.showPanel(0);
     document.getElementById("stats").appendChild(stats.domElement);
-}
-
-function setVideoStyle(elem) {
-    elem.style.position = "absolute";
-    elem.style.top = 0;
-    elem.style.left = 0;
-}
-
-function drawPolyline(landmarks, start, end, closed) {
-    const overlayCtx = overlayCanvas.getContext("2d");
-
-    overlayCtx.beginPath();
-    overlayCtx.strokeStyle = 'blue';
-    overlayCtx.lineWidth = 1;
-
-    overlayCtx.moveTo(landmarks[start][0], landmarks[start][1]);
-    for (let i = start + 1; i <= end; i++) {
-        overlayCtx.lineTo(landmarks[i][0], landmarks[i][1]);
-    }
-    if (closed) {
-        overlayCtx.lineTo(landmarks[start][0], landmarks[start][1]);
-    }
-    overlayCtx.stroke();
 }
 
 function writeOverlayText(text) {
@@ -53,12 +34,29 @@ function writeOverlayText(text) {
     overlayCtx.fillText(text, overlayCanvas.width/2, overlayCanvas.height/8);
 }
 
+function drawPolyline(landmarks, start, end, closed) {
+    const overlayCtx = overlayCanvas.getContext("2d");
+
+    overlayCtx.beginPath();
+    overlayCtx.strokeStyle = OVERLAY_COLOR;
+    overlayCtx.lineWidth = 1.5;
+
+    overlayCtx.moveTo(landmarks[start][0], landmarks[start][1]);
+    for (var i = start + 1; i <= end; i++) {
+        overlayCtx.lineTo(landmarks[i][0], landmarks[i][1]);
+    }
+    if (closed) {
+        overlayCtx.lineTo(landmarks[start][0], landmarks[start][1]);
+    }
+    overlayCtx.stroke();
+}
+
 function drawBbox(bbox) {
     const overlayCtx = overlayCanvas.getContext("2d");
 
     overlayCtx.beginPath();
-    overlayCtx.strokeStyle = "red";
-    overlayCtx.lineWidth = 1;
+    overlayCtx.strokeStyle = "blue";
+    overlayCtx.lineWidth = 1.5;
 
     // [x1,y1,x2,y2]
     overlayCtx.moveTo(bbox[0], bbox[1]);
@@ -75,14 +73,10 @@ function drawFeatures(features) {
     const landmarks = features.landmarks;
 
     const overlayCtx = overlayCanvas.getContext("2d");
-    overlayCtx.clearRect(
-        0, 0,
-        width,
-        height
-    );
+    overlayCtx.clearRect( 0, 0, width, height );
 
-    let landmarksFormatted = [];
-    for (let i = 0; i < landmarks.length; i += 2) {
+    var landmarksFormatted = [];
+    for (var i = 0; i < landmarks.length; i += 2) {
         const l = [landmarks[i], landmarks[i+1]];
         landmarksFormatted.push(l);
     }
@@ -101,26 +95,36 @@ function drawFeatures(features) {
 }
 
 function tick() {
+    if (!running) return;
+
     stats.begin();
 
     imageData = grayscale.getFrame();
+    const videoCanvasCtx = videoCanvas.getContext("2d");
+    videoCanvasCtx.drawImage(
+        videoSource,
+        0, 0,
+        width,
+        height
+    );
 
     stats.end();
 
     requestAnimationFrame(tick);
 }
 
-function onInit() {
-    initStats();
+function onInit(source) {
+    videoSource = source;
+    running = true;
 
-    worker = new Worker("face-tracker.worker.js");
+    worker = new Worker("./face-tracker.worker.js");
     worker.postMessage({ type: "init", width: width, height: height });
 
     worker.onmessage = function (e) {
         var msg = e.data;
         switch (msg.type) {
             case "loaded": {
-                console.log("loaded");
+                // console.log("Loaded");
                 writeOverlayText("Initializing face tracking...");
                 break;
             }
@@ -130,8 +134,10 @@ function onInit() {
                 break;
             }
             case "result": {
-                drawFeatures(msg.features);
-                console.log(msg.pose.translation);
+                if (running) {
+                    drawFeatures(msg.features);
+                }
+                // console.log(msg.pose.translation);
                 break;
             }
             // case "not found": {
@@ -150,34 +156,80 @@ function onInit() {
 }
 
 function process() {
-    if (imageData) {
+    if (running && imageData) {
         worker.postMessage({ type: 'process', imagedata: imageData });
     }
 }
 
+function stop() {
+    if (!running) return;
+    if (videoSource) {
+        const overlayCtx = overlayCanvas.getContext("2d");
+        overlayCtx.clearRect( 0, 0, width, height );
+
+        const tracks = videoSource.srcObject.getTracks();
+        tracks.forEach(function(track) {
+            track.stop();
+        });
+        videoSource.srcObject = null;
+
+        videoCanvas.style.display = "none";
+        running = false;
+    }
+}
+
+function restart() {
+    if (running) return;
+    videoCanvas.style.display = "block";
+    grayscale.requestStream()
+        .then(source => {
+            const overlayCtx = overlayCanvas.getContext("2d");
+            overlayCtx.clearRect( 0, 0, width, height );
+            running = true;
+            tick();
+            process();
+        })
+        .catch(err => {
+            console.warn("ERROR: " + err);
+        });
+}
+
 window.onload = () => {
-    let video = document.createElement("video");
+    function setVideoStyle(elem) {
+        elem.style.position = "absolute";
+        elem.style.borderRadius = "10px";
+        elem.style.top = "15px";
+        elem.style.left = "15px";
+    }
+
+    var video = document.createElement("video");
     video.setAttribute("autoplay", "");
     video.setAttribute("muted", "");
     video.setAttribute("playsinline", "");
     // document.body.appendChild(video);
 
-    let canvas = document.createElement("canvas");
-    canvas.style.zIndex = 9998;
-    setVideoStyle(canvas);
-    document.body.appendChild(canvas);
+    videoCanvas = document.createElement("canvas");
+    setVideoStyle(videoCanvas);
+    videoCanvas.id = "face-tracking-video";
+    videoCanvas.width = width;
+    videoCanvas.height = height;
+    videoCanvas.style.zIndex = 9998;
+    document.body.appendChild(videoCanvas);
 
     overlayCanvas = document.createElement("canvas");
     setVideoStyle(overlayCanvas);
-    overlayCanvas.id = "overlay";
+    overlayCanvas.id = "face-tracking-overlay";
     overlayCanvas.width = width;
     overlayCanvas.height = height;
     overlayCanvas.style.zIndex = 9999;
     document.body.appendChild(overlayCanvas);
 
-    grayscale = new ARENAFaceTracker.GrayScaleMedia(video, width, height, canvas);
+    grayscale = new ARENAFaceTracker.GrayScaleMedia(video, width, height);
     grayscale.requestStream()
-        .then(onInit)
+        .then(source => {
+            initStats();
+            onInit(source);
+        })
         .catch(err => {
             console.warn("ERROR: " + err);
         });

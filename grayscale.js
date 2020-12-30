@@ -111,7 +111,7 @@ export class GrayScaleMedia
                 this._source.srcObject = stream;
                 this._source.onloadedmetadata = e => {
                     this._source.play();
-                    resolve(this._source, stream);
+                    resolve(this._source);
                 };
             })
             .catch(err => {
