@@ -9,9 +9,9 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 set( CMAKE_CXX_FLAGS_RELEASE "-g -Wall -O3" )
 
-set( WASM ${CMAKE_SOURCE_DIR}/wasm )
-file( MAKE_DIRECTORY ${WASM} )
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WASM} )
+# set( WASM ${CMAKE_SOURCE_DIR}/wasm )
+# file( MAKE_DIRECTORY ${WASM} )
+# set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WASM} )
 
 set( BUILD_WASM opencv/build_wasm )
 set( SRC_DIR src )

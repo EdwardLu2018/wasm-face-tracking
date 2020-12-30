@@ -3,7 +3,7 @@ const webpack = require("webpack");
 const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = (env, argv) => ({
-  entry: './faceTracker.js',
+  entry: './face-tracker-lib.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: argv.mode == 'development' ? 'arena-face-tracker.js' : 'arena-face-tracker.min.js',
