@@ -6,7 +6,7 @@ var grayscale = null;
 
 var videoCanvas = null;
 var overlayCanvas = null;
-var videoStream = null;
+var videoSource = null;
 
 var worker = null;
 var imageData = null;
@@ -100,6 +100,13 @@ function tick() {
     stats.begin();
 
     imageData = grayscale.getFrame();
+    const videoCanvasCtx = videoCanvas.getContext("2d");
+    videoCanvasCtx.drawImage(
+        videoSource,
+        0, 0,
+        width,
+        height
+    );
 
     stats.end();
 
@@ -107,7 +114,7 @@ function tick() {
 }
 
 function onInit(source) {
-    videoStream = source;
+    videoSource = source;
     running = true;
 
     worker = new Worker("./face-tracker.worker.js");
@@ -156,15 +163,15 @@ function process() {
 
 function stop() {
     if (!running) return;
-    if (videoStream) {
+    if (videoSource) {
         const overlayCtx = overlayCanvas.getContext("2d");
         overlayCtx.clearRect( 0, 0, width, height );
 
-        const tracks = videoStream.srcObject.getTracks();
+        const tracks = videoSource.srcObject.getTracks();
         tracks.forEach(function(track) {
             track.stop();
         });
-        videoStream.srcObject = null;
+        videoSource.srcObject = null;
 
         videoCanvas.style.display = "none";
         running = false;
@@ -202,19 +209,22 @@ window.onload = () => {
     // document.body.appendChild(video);
 
     videoCanvas = document.createElement("canvas");
-    videoCanvas.style.zIndex = 9998;
     setVideoStyle(videoCanvas);
+    videoCanvas.id = "face-tracking-video";
+    videoCanvas.width = width;
+    videoCanvas.height = height;
+    videoCanvas.style.zIndex = 9998;
     document.body.appendChild(videoCanvas);
 
     overlayCanvas = document.createElement("canvas");
     setVideoStyle(overlayCanvas);
-    overlayCanvas.id = "overlay";
+    overlayCanvas.id = "face-tracking-overlay";
     overlayCanvas.width = width;
     overlayCanvas.height = height;
     overlayCanvas.style.zIndex = 9999;
     document.body.appendChild(overlayCanvas);
 
-    grayscale = new ARENAFaceTracker.GrayScaleMedia(video, width, height, videoCanvas);
+    grayscale = new ARENAFaceTracker.GrayScaleMedia(video, width, height);
     grayscale.requestStream()
         .then(source => {
             initStats();
