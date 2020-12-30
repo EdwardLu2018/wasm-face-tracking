@@ -1,11 +1,11 @@
 {
   "name": "ARENAFaceTracking",
   "version": "1.0.0",
-  "main": "./faceTracker.js",
+  "main": "./face-tracker-lib.js",
   "scripts": {
     "dev": "webpack --mode development --progress --watch",
     "build": "./build.sh; webpack --mode production; echo Built at `date`",
-    "serve": "webpack-dev-server --mode development"
+    "serve": "python3 -m http.server"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +23,6 @@
     "babel-loader": "^8.1.0",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11",
-    "webpack-dev-server": "^3.11.0",
     "raw-loader": "^4.0.1",
     "terser-webpack-plugin": "^2.3.6"
   },

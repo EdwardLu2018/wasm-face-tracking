@@ -3,9 +3,11 @@ let height = 240; // window.innerHeight;
 
 let stats = null;
 let grayscale = null;
-let faceTracker = null;
 
 let overlayCanvas = null;
+
+let worker = null;
+let imageData = null;
 
 const OVERLAY_COLOR = "#ef2d5e";
 
@@ -98,25 +100,60 @@ function drawFeatures(features) {
     drawPolyline(landmarksFormatted, 60, 67, true);    // inner lip
 }
 
-function processVideo() {
+function tick() {
     stats.begin();
 
-    const features = faceTracker.detectFeatures();
-    const pose = faceTracker.getPose(features.landmarks);
-    // const rotation = pose.rotation;
-    // const translation = pose.translation;
-
-    if (features) drawFeatures(features);
+    imageData = grayscale.getFrame();
 
     stats.end();
 
-    requestAnimationFrame(processVideo);
+    requestAnimationFrame(tick);
 }
 
-window.addEventListener("faceModelDownloadProgress", e => {
-    const progress = Math.round(e.detail * 100) / 100;
-    writeOverlayText(`Downloading Face Model: ${progress}%`);
-}, false);
+function onInit() {
+    initStats();
+
+    worker = new Worker("face-tracker.worker.js");
+    worker.postMessage({ type: "init", width: width, height: height });
+
+    worker.onmessage = function (e) {
+        var msg = e.data;
+        switch (msg.type) {
+            case "loaded": {
+                console.log("loaded");
+                writeOverlayText("Initializing face tracking...");
+                break;
+            }
+            case "progress": {
+                const progress = Math.round(msg.progress * 100) / 100;
+                writeOverlayText(`Downloading Face Model: ${progress}%`);
+                break;
+            }
+            case "result": {
+                drawFeatures(msg.features);
+                console.log(msg.pose.translation);
+                break;
+            }
+            // case "not found": {
+            //     console.log("No face found");
+            //     break;
+            // }
+            default: {
+                break;
+            }
+        }
+        process();
+    }
+
+    tick();
+    process();
+}
+
+function process() {
+    if (imageData) {
+        worker.postMessage({ type: 'process', imagedata: imageData });
+    }
+}
 
 window.onload = () => {
     let video = document.createElement("video");
@@ -138,12 +175,9 @@ window.onload = () => {
     overlayCanvas.style.zIndex = 9999;
     document.body.appendChild(overlayCanvas);
 
-    faceTracker = new ARENAFaceTracker.FaceTracker(video, width, height, canvas);
-    faceTracker.requestStream()
-        .then(() => {
-            initStats();
-            requestAnimationFrame(processVideo);
-        })
+    grayscale = new ARENAFaceTracker.GrayScaleMedia(video, width, height, canvas);
+    grayscale.requestStream()
+        .then(onInit)
         .catch(err => {
             console.warn("ERROR: " + err);
         });

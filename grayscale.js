@@ -1,4 +1,4 @@
-export class GrayScale
+export class GrayScaleMedia
 {
     constructor(source, width, height, canvas) {
         this._source = source;
