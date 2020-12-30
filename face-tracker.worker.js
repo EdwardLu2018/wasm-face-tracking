@@ -1,6 +1,6 @@
 if ('function' === typeof importScripts) {
     importScripts("./detect_face_wasm.js");
-    importScripts("./dist/arena-face-tracker.js");
+    importScripts("./dist/arena-face-tracker.min.js");
 
     self.onmessage = function (e) {
         var msg = e.data;
