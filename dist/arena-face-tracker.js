@@ -163,7 +163,7 @@ class FaceTracker {
   getShapePredictor(callback) {
     const req = new XMLHttpRequest();
     req.addEventListener('progress', e => this.shapePredictorProgress(e));
-    req.open("GET", "/shape_predictor_68_face_landmarks_compressed.dat", true);
+    req.open('GET', 'https://arena-cdn.conix.io/store/face-tracking/shape_predictor_68_face_landmarks_compressed.dat', true);
     req.responseType = "arraybuffer";
 
     req.onload = e => {

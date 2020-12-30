@@ -1,4 +1,4 @@
-const FaceTracker = (function () {
+ARENA.FaceTracker = (function () {
     // ==================================================
     // PRIVATE VARIABLES
     // ==================================================
@@ -19,7 +19,7 @@ const FaceTracker = (function () {
 
     var hasAvatar = false;
 
-    var width = 320;
+    var width = globals.localVideoWidth;
     var height = 240;
 
     // ==================================================
@@ -190,7 +190,7 @@ const FaceTracker = (function () {
         overlayCtx.clearRect( 0, 0, width, height );
 
         if (!worker) {
-            worker = new Worker("./face-tracker.worker.js");
+            worker = new Worker("./face-tracking/face-tracker.worker.js");
             worker.postMessage({ type: "init", width: width, height: height });
 
             worker.onmessage = function (e) {
@@ -334,3 +334,10 @@ const FaceTracker = (function () {
         }
     }
 })();
+
+// initialize face tracking code if not on mobile
+if (!AFRAME.utils.device.isMobile()) {
+    const displayBbox = false;
+    const flipped = false;
+    ARENA.FaceTracker.init(displayBbox, flipped);
+}
