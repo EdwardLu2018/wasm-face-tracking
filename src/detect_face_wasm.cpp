@@ -14,7 +14,7 @@
 #include <dlib/external/zlib/zlib.h>
 
 #define PI                  3.14159265
-#define FRAME_SKIP_RATE     15
+#define FRAME_SKIP_RATE     5
 #define MODEL_SIZE          99693937
 
 #define FEATURES_LEN        140     // 4 + 2 * 68

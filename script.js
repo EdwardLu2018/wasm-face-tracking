@@ -17,10 +17,17 @@ ARENA.FaceTracker = (function () {
     var worker = null;
     var imageData = null;
 
-    var hasAvatar = false;
+    var running = false;
 
     var width = globals.localVideoWidth;
-    var height = 240;
+    var height = Math.ceil((window.screen.height / window.screen.width) * width);
+
+    const targetFps = 30;
+    const fpsInterval = 1000 / targetFps; // ms
+
+    var startTime, prevTime;
+
+    var initializingTimer = null;
 
     // ==================================================
     // PRIVATE FUNCTIONS
@@ -100,20 +107,20 @@ ARENA.FaceTracker = (function () {
     function hasFace(landmarks) {
         if (!landmarks || landmarks.length == 0) return false;
 
-        let zeros = 0;
+        let numZeros = 0;
         for (let i = 0; i < landmarks.length; i++) {
             if (i % 2 == 0 && landmarks[i] > width) return false;
             if (i % 2 == 1 && landmarks[i] > height) return false;
-            if (landmarks[i] == 0) zeros++;
+            if (landmarks[i] == 0) numZeros++;
         }
-        return zeros != landmarks.length;
+        return numZeros != landmarks.length;
     }
 
     function round3(num) {
         return parseFloat(num.toFixed(3));
     }
 
-    function createFaceJSON(features, pose) {
+    function createFaceJSON(hasFace, features, pose) {
         const landmarksRaw = features.landmarks;
         const bbox = features.bbox;
         const quat = pose.rotation;
@@ -122,7 +129,7 @@ ARENA.FaceTracker = (function () {
         let faceJSON = {};
         faceJSON["object_id"] = "face_" + globals.idTag;
 
-        faceJSON["hasFace"] = hasFace(landmarksRaw);
+        faceJSON["hasFace"] = hasFace;
 
         faceJSON["image"] = {};
         faceJSON["image"]["flipped"] = flipped;
@@ -167,29 +174,34 @@ ARENA.FaceTracker = (function () {
         return faceJSON;
     }
 
+    // display frames
     function tick() {
-        if (!hasAvatar) return;
+        if (!running) return;
 
-        imageData = grayscale.getFrame();
-        const videoCanvasCtx = videoCanvas.getContext("2d");
-        videoCanvasCtx.drawImage(
-            videoSource,
-            0, 0,
-            width,
-            height
-        );
+        const now = Date.now();
+        const dt = now - prevTime;
+
+        if (dt >= fpsInterval) {
+            prevTime = now - (dt % fpsInterval);
+            imageData = grayscale.getFrame();
+            const videoCanvasCtx = videoCanvas.getContext("2d");
+            videoCanvasCtx.drawImage(
+                videoSource, 0, 0, width, height
+            );
+        }
 
         requestAnimationFrame(tick);
     }
 
     function onInit(source) {
         videoSource = source;
-        hasAvatar = true;
+        running = true;
 
         const overlayCtx = overlayCanvas.getContext("2d");
         overlayCtx.clearRect( 0, 0, width, height );
 
         if (!worker) {
+            // worker to handle CV in the background
             worker = new Worker("./face-tracking/face-tracker.worker.js");
             worker.postMessage({ type: "init", width: width, height: height });
 
@@ -197,49 +209,73 @@ ARENA.FaceTracker = (function () {
                 var msg = e.data;
                 switch (msg.type) {
                     case "loaded": {
-                        // console.log("Loaded");
-                        writeOverlayText("Initializing face tracking...");
+                        process(); // start processing after face-tracker is ready
                         break;
                     }
                     case "progress": {
-                        const progress = Math.round(msg.progress * 100) / 100;
-                        writeOverlayText(`Downloading Face Model: ${progress}%`);
+                        const progress = (Math.round(msg.progress * 100) / 100).toFixed(2);
+                        // if loading progress is more than 99, start displaying initialization
+                        if (progress > 99) {
+                            let i = 0;
+                            if (!initializingTimer) {
+                                initializingTimer = setInterval(() => {
+                                    if (running) {
+                                        writeOverlayText(`Initializing Face Tracking${".".repeat(i%4)}`);
+                                        i++;
+                                    }
+                                }, 500);
+                            }
+                        }
+                        if (running) {
+                            writeOverlayText(`Downloading Face Model: ${progress}%`);
+                        }
                         break;
                     }
                     case "result": {
-                        if (hasAvatar) {
-                            drawFeatures(msg.features);
-
+                        if (running) {
+                            const valid = hasFace(msg.features.landmarks);
+                            if (valid) {
+                                drawFeatures(msg.features);
+                            } else {
+                                const overlayCtx = overlayCanvas.getContext("2d");
+                                overlayCtx.clearRect( 0, 0, width, height );
+                            }
                             if (msg.features && msg.pose) {
-                                const faceJSON = createFaceJSON(msg.features, msg.pose);
+                                const faceJSON = createFaceJSON(valid, msg.features, msg.pose);
                                 if (faceJSON != prevJSON) {
                                     publish(globals.outputTopic + globals.camName + "/face", faceJSON);
                                     prevJSON = faceJSON;
                                 }
                             }
                         }
+                        if (initializingTimer) {
+                            clearInterval(initializingTimer);
+                        }
+                        process(); // process again after we just finished processing
                         break;
                     }
                     default: {
                         break;
                     }
                 }
-                process();
             }
         }
 
+        startTime = Date.now();
+        prevTime = startTime;
+
         tick();
-        process();
     }
 
+    // tell worker we have an image ready to process
     function process() {
-        if (hasAvatar && imageData) {
+        if (running && imageData) {
             worker.postMessage({ type: 'process', imagedata: imageData });
         }
     }
 
     function stop() {
-        if (!hasAvatar) return;
+        if (!running) return;
 
         if (videoSource) {
             const overlayCtx = overlayCanvas.getContext("2d");
@@ -252,17 +288,18 @@ ARENA.FaceTracker = (function () {
             videoSource.srcObject = null;
 
             videoCanvas.style.display = "none";
-            hasAvatar = false;
+            running = false;
         }
     }
 
     function restart() {
-        if (hasAvatar) return;
+        if (running) return;
 
         videoCanvas.style.display = "block";
         grayscale.requestStream()
             .then(source => {
                 onInit(source);
+                process();
             })
             .catch(err => {
                 console.warn("ERROR: " + err);
@@ -288,16 +325,13 @@ ARENA.FaceTracker = (function () {
             video.setAttribute("autoplay", "");
             video.setAttribute("muted", "");
             video.setAttribute("playsinline", "");
-            // video.addEventListener("canplay", e => {
-            //     height = video.videoHeight / (video.videoWidth / width);
-            // }, false);
-
             videoCanvas = document.createElement("canvas");
             setVideoStyle(videoCanvas);
             videoCanvas.id = "face-tracking-video";
             videoCanvas.width = width;
             videoCanvas.height = height;
             videoCanvas.style.zIndex = 9998;
+            videoCanvas.style.opacity = 0.3;
             if (flipped) {
                 videoCanvas.getContext('2d').translate(width, 0);
                 videoCanvas.getContext('2d').scale(-1, 1);
@@ -315,8 +349,8 @@ ARENA.FaceTracker = (function () {
             grayscale = new ARENAFaceTracker.GrayScaleMedia(video, width, height);
         },
 
-        hasAvatar: function() {
-            return hasAvatar;
+        running: function() {
+            return running;
         },
 
         run: function() {
