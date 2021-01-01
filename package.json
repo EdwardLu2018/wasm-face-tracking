@@ -1,7 +1,7 @@
 {
   "name": "ARENAFaceTracking",
   "version": "1.0.0",
-  "main": "./face-tracker-lib.js",
+  "main": "./src/face-tracker-lib.js",
   "scripts": {
     "dev": "webpack --mode development --progress --watch",
     "build": "./build.sh; webpack --mode production; echo Built at `date`",

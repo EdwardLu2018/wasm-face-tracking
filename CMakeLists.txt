@@ -14,7 +14,7 @@ set( CMAKE_CXX_FLAGS_RELEASE "-g -Wall -O3" )
 # set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WASM} )
 
 set( BUILD_WASM opencv/build_wasm )
-set( SRC_DIR src )
+set( SRC_DIR emscripten )
 
 add_subdirectory( dlib/dlib )
 set( DLIB_NO_GUI_SUPPORT ON )
@@ -30,7 +30,7 @@ file( GLOB opencv_js "${BUILD_WASM}/lib/*.a" )
 include_directories( ${SRC_DIR} )
 file( GLOB SRCS ${SRC_DIR}/*.cpp )
 
-add_executable( detect_face_wasm ${SRC_DIR}/detect_face_wasm.cpp ${SRCS} )
-target_link_libraries( detect_face_wasm dlib::dlib ${opencv_js} )
+add_executable( face_tracker_wasm ${SRC_DIR}/face_tracker_wasm.cpp ${SRCS} )
+target_link_libraries( face_tracker_wasm dlib::dlib ${opencv_js} )
 
-set_target_properties( detect_face_wasm PROPERTIES LINK_FLAGS "-s EXPORT_NAME='FaceDetectorWasm' -s USE_ZLIB=1 -s MODULARIZE=1 -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='['_malloc', '_free']' -s EXTRA_EXPORTED_RUNTIME_METHODS='['ccall', 'cwrap', 'getValue', 'setValue']' -s WASM=1" )
+set_target_properties( face_tracker_wasm PROPERTIES LINK_FLAGS "-s EXPORT_NAME='FaceDetectorWasm' -s SINGLE_FILE=1 -s USE_ZLIB=1 -s MODULARIZE=1 -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='['_malloc', '_free']' -s EXTRA_EXPORTED_RUNTIME_METHODS='['ccall', 'cwrap', 'getValue', 'setValue']' -s WASM=1" )
