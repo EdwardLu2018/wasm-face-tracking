@@ -301,7 +301,9 @@ class GrayScaleMedia {
     const positionLocation = this.gl.getAttribLocation(program, "position");
     this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
     this.gl.enableVertexAttribArray(positionLocation);
-    this.flipLocation = this.gl.getUniformLocation(program, "flipY");
+    this.flipYLocation = this.gl.getUniformLocation(program, "flipY");
+    this.flipXLocation = this.gl.getUniformLocation(program, "flipX");
+    this.gl.uniform1f(this.flipYLocation, -1);
     const texture = this.gl.createTexture();
     this.gl.activeTexture(this.gl.TEXTURE0);
     this.gl.bindTexture(this.gl.TEXTURE_2D, texture); // if either dimension of image is not a power of 2
@@ -315,10 +317,12 @@ class GrayScaleMedia {
     this.grayBuf = new Uint8Array(this.gl.drawingBufferWidth * this.gl.drawingBufferHeight);
   }
 
+  flipHorizontal() {
+    this.gl.uniform1f(this.flipXLocation, -1);
+  }
+
   getFrame() {
     if (!this.glReady) return undefined;
-    this.gl.uniform1f(this.flipLocation, -1); // flip image
-
     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this._source);
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     this.gl.readPixels(0, 0, this.gl.drawingBufferWidth, this.gl.drawingBufferHeight, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.pixelBuf);
@@ -381,7 +385,7 @@ class GrayScaleMedia {
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = "attribute vec2 position;\nvarying vec2 tex_coords;\nuniform float flipY;\nvoid main(void) {\ntex_coords = (position + 1.0) / 2.0;\ntex_coords.y = 1.0 - tex_coords.y;\ngl_Position = vec4(position * vec2(1, flipY), 0.0, 1.0);\n}"
+module.exports = "attribute vec2 position;\nvarying vec2 tex_coords;\nuniform float flipY;\nuniform float flipX;\nvoid main(void) {\ntex_coords = (position + 1.0) / 2.0;\ntex_coords.y = 1.0 - tex_coords.y;\ngl_Position = vec4(position * vec2(flipX, flipY), 0.0, 1.0);\n}"
 
 /***/ }),
 
