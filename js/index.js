@@ -214,6 +214,8 @@ window.onload = () => {
     videoCanvas.width = width;
     videoCanvas.height = height;
     videoCanvas.style.zIndex = 9998;
+    videoCanvas.getContext('2d').translate(width, 0);
+    videoCanvas.getContext('2d').scale(-1, 1);
     document.body.appendChild(videoCanvas);
 
     overlayCanvas = document.createElement("canvas");
@@ -225,6 +227,7 @@ window.onload = () => {
     document.body.appendChild(overlayCanvas);
 
     grayscale = new FaceTracker.GrayScaleMedia(video, width, height);
+    grayscale.flipHorizontal();
     grayscale.requestStream()
         .then(source => {
             initStats();
