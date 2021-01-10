@@ -1,6 +1,6 @@
 if ('function' === typeof importScripts) {
     importScripts("./face_tracker_wasm.js");
-    importScripts("../dist/arena-face-tracker.min.js");
+    importScripts("../dist/face-tracker.min.js");
 
     self.onmessage = function (e) {
         var msg = e.data;
@@ -35,7 +35,7 @@ if ('function' === typeof importScripts) {
             postMessage({type: "progress", progress: progress});
         }
 
-        faceTracker = new ARENAFaceTracker.FaceTracker(msg.width, msg.height, onLoad, onProgress);
+        faceTracker = new FaceTracker.FaceTracker(msg.width, msg.height, onLoad, onProgress);
     }
 
     function process() {

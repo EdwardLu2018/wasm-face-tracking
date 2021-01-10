@@ -1,5 +1,5 @@
 {
-  "name": "ARENAFaceTracking",
+  "name": "FaceTracking",
   "version": "1.0.0",
   "main": "./src/face-tracker-lib.js",
   "scripts": {
