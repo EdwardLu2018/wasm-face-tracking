@@ -6,8 +6,8 @@ module.exports = (env, argv) => ({
   entry: './src/face-tracker-lib.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: argv.mode == 'development' ? 'arena-face-tracker.js' : 'arena-face-tracker.min.js',
-    library: 'ARENAFaceTracker',
+    filename: argv.mode == 'development' ? 'face-tracker.js' : 'face-tracker.min.js',
+    library: 'FaceTracker',
     libraryTarget: 'umd',
     globalObject: 'typeof self !== \'undefined\' ? self : this',
   },

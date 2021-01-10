@@ -224,7 +224,7 @@ window.onload = () => {
     overlayCanvas.style.zIndex = 9999;
     document.body.appendChild(overlayCanvas);
 
-    grayscale = new ARENAFaceTracker.GrayScaleMedia(video, width, height);
+    grayscale = new FaceTracker.GrayScaleMedia(video, width, height);
     grayscale.requestStream()
         .then(source => {
             initStats();
