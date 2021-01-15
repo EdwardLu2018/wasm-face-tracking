@@ -15,7 +15,12 @@
   },
   "license": "ISC",
   "browserslist": [
-    "last 2 Chrome versions, last 2 Firefox versions, last 2 Safari versions, last 2 Edge versions"
+    "last 3 firefox versions",
+    "last 3 and_chr versions",
+    "last 3 chrome versions",
+    "last 3 opera versions",
+    "last 3 ios_saf versions",
+    "last 3 safari versions"
   ],
   "devDependencies": {
     "eslint": "^7.15.0",

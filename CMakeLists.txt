@@ -7,7 +7,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif(NOT CMAKE_BUILD_TYPE)
 
-set( CMAKE_CXX_FLAGS_RELEASE "-g -Wall -O3" )
+set( CMAKE_CXX_FLAGS_RELEASE "-Wall -O3" )
 
 # set( WASM ${CMAKE_SOURCE_DIR}/wasm )
 # file( MAKE_DIRECTORY ${WASM} )
@@ -33,4 +33,4 @@ file( GLOB SRCS ${SRC_DIR}/*.cpp )
 add_executable( face_tracker_wasm ${SRC_DIR}/face_tracker_wasm.cpp ${SRCS} )
 target_link_libraries( face_tracker_wasm dlib::dlib ${opencv_js} )
 
-set_target_properties( face_tracker_wasm PROPERTIES LINK_FLAGS "-s EXPORT_NAME='FaceTrackerWasm' -s USE_ZLIB=1 -s MODULARIZE=1 -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='['_malloc', '_free']' -s EXTRA_EXPORTED_RUNTIME_METHODS='['ccall', 'cwrap', 'getValue', 'setValue']' -s WASM=1" )
+set_target_properties( face_tracker_wasm PROPERTIES LINK_FLAGS "-s EXPORT_NAME='FaceTrackerWasm' -s USE_ZLIB=1 -s MODULARIZE=1 -s DEMANGLE_SUPPORT=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='['_malloc', '_free']' -s EXTRA_EXPORTED_RUNTIME_METHODS='['ccall', 'cwrap', 'getValue', 'setValue']' -s WASM=1 --memory-init-file 0" )
