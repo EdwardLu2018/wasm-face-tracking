@@ -16,7 +16,7 @@ export class FaceTracker {
         this._transLength = 3;
         this._poseLength = this._rotLength + this._transLength;
 
-        FaceDetectorWasm().then(function (Module) {
+        FaceTrackerWasm().then(function (Module) {
             console.log("Face Detector WASM module loaded.");
             _this.onWasmInit(Module);
             _this.getShapePredictor();

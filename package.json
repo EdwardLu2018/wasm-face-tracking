@@ -1,14 +1,18 @@
 {
   "name": "FaceTracking",
   "version": "1.0.0",
-  "main": "./src/face-tracker-lib.js",
+  "main": "./src/index.js",
   "scripts": {
     "dev": "webpack --mode development --progress --watch",
     "build": "./build.sh; webpack --mode production; echo Built at `date`",
     "serve": "python3 -m http.server"
   },
   "keywords": [],
-  "author": "",
+  "author": "Edward Lu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EdwardLu2018/wasm-face-tracking"
+  },
   "license": "ISC",
   "browserslist": [
     "last 2 Chrome versions, last 2 Firefox versions, last 2 Safari versions, last 2 Edge versions"

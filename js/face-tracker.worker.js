@@ -1,62 +1,59 @@
-if ('function' === typeof importScripts) {
-    importScripts("./face_tracker_wasm.js");
-    importScripts("../dist/face-tracker.min.js");
+importScripts("./face_tracker_wasm.js");
+importScripts("../dist/face-tracker.min.js");
 
-    self.onmessage = function (e) {
-        var msg = e.data;
-        switch (msg.type) {
-            case "init": {
-                load(msg);
-                return;
-            }
-            case "process": {
-                next = msg.imagedata;
-                process();
-                return;
-            }
-            default: {
-                break;
-            }
+self.onmessage = function (e) {
+    var msg = e.data;
+    switch (msg.type) {
+        case "init": {
+            load(msg);
+            return;
         }
-    };
-
-    var next = null;
-
-    var faceTracker = null;
-
-    var features = null, pose = null;
-
-    function load(msg) {
-        var onLoad = function() {
-            postMessage({type: "loaded"});
+        case "process": {
+            next = msg.imagedata;
+            process();
+            return;
         }
-
-        var onProgress = function(progress) {
-            postMessage({type: "progress", progress: progress});
+        default: {
+            break;
         }
+    }
+};
 
-        faceTracker = new FaceTracker.FaceTracker(msg.width, msg.height, onLoad, onProgress);
+var next = null;
+
+var faceTracker = null;
+
+var features = null, pose = null;
+
+function load(msg) {
+    var onLoad = function() {
+        postMessage({type: "loaded"});
     }
 
-    function process() {
-        features = null;
-        pose = null;
+    var onProgress = function(progress) {
+        postMessage({type: "progress", progress: progress});
+    }
 
-        if (faceTracker && faceTracker.ready) {
-            features = faceTracker.detectFeatures(next);
-            if (features) {
-                pose = faceTracker.getPose(features.landmarks);
-            }
-        }
+    faceTracker = new FaceTracker.FaceTracker(msg.width, msg.height, onLoad, onProgress);
+}
 
+function process() {
+    features = null;
+    pose = null;
+
+    if (faceTracker && faceTracker.ready) {
+        features = faceTracker.detectFeatures(next);
         if (features) {
-            postMessage({type: "result", features: features, pose: pose});
+            pose = faceTracker.getPose(features.landmarks);
         }
-        // else {
-        //     postMessage({ type: "not found" });
-        // }
-
-        next = null;
     }
 
+    if (features) {
+        postMessage({type: "result", features: features, pose: pose});
+    }
+    // else {
+    //     postMessage({ type: "not found" });
+    // }
+
+    next = null;
 }

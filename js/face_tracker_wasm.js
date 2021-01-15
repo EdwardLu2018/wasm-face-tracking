@@ -1,10 +1,10 @@
 
-var FaceDetectorWasm = (function() {
+var FaceTrackerWasm = (function() {
   var _scriptDir = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : undefined;
   if (typeof __filename !== 'undefined') _scriptDir = _scriptDir || __filename;
   return (
-function(FaceDetectorWasm) {
-  FaceDetectorWasm = FaceDetectorWasm || {};
+function(FaceTrackerWasm) {
+  FaceTrackerWasm = FaceTrackerWasm || {};
 
 /**
  * @license
@@ -25,7 +25,7 @@ function(FaceDetectorWasm) {
 // after the generated code, you will need to define   var Module = {};
 // before the code. Then that object will be used in the code, and you
 // can continue to use Module afterwards as well.
-var Module = typeof FaceDetectorWasm !== 'undefined' ? FaceDetectorWasm : {};
+var Module = typeof FaceTrackerWasm !== 'undefined' ? FaceTrackerWasm : {};
 
 // Set up the promise that indicates the Module is initialized
 var readyPromiseResolve, readyPromiseReject;
@@ -5718,14 +5718,14 @@ run();
 
 
 
-  return FaceDetectorWasm.ready
+  return FaceTrackerWasm.ready
 }
 );
 })();
 if (typeof exports === 'object' && typeof module === 'object')
-      module.exports = FaceDetectorWasm;
+      module.exports = FaceTrackerWasm;
     else if (typeof define === 'function' && define['amd'])
-      define([], function() { return FaceDetectorWasm; });
+      define([], function() { return FaceTrackerWasm; });
     else if (typeof exports === 'object')
-      exports["FaceDetectorWasm"] = FaceDetectorWasm;
+      exports["FaceTrackerWasm"] = FaceTrackerWasm;
     
