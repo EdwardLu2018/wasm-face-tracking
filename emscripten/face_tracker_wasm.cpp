@@ -17,8 +17,6 @@
 #define FRAME_SKIP_RATE     5
 #define MODEL_SIZE          99693937
 
-#define POSE_LEN            7       // 4 + 3
-
 #ifdef __cplusplus
 extern "C" {
 #endif

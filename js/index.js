@@ -1,5 +1,5 @@
-var width = 320; // window.innerWidth;
-var height = 240; // window.innerHeight;
+var width = 320;
+var height = 240;
 
 var stats = null;
 
@@ -102,7 +102,6 @@ window.addEventListener("onFaceTrackerInit", (e) => {
 
 window.addEventListener("onFaceTrackerProgress", (e) => {
     const progress = e.detail.progress;
-    // console.log(progress);
     writeOverlayText(`Downloading Face Model: ${progress}%`);
 });
 
@@ -116,9 +115,9 @@ window.addEventListener("onFaceTrackerFeatures", (e) => {
 });
 
 function stop() {
-    FaceTracker.stop();
+    faceTracker.stop();
 }
 
 function restart() {
-    FaceTracker.restart();
+    faceTracker.restart();
 }

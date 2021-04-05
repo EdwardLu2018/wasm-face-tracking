@@ -40,7 +40,6 @@ function process() {
             pose = faceTracker.getPose(features.landmarks);
         }
     }
-    console.log(pose.translation.x, pose.translation.y, pose.translation.z);
 
     postMessage({type: "result", features: features, pose: pose});
 

@@ -129,10 +129,11 @@ export class FaceTracker {
 
     restart() {
         if (!this.running) {
-            this.running = true;
             this.source.init(this.cameraOptions)
                 .then((source) => {
                     this.preprocessor.attachElem(source);
+                    this.running = true;
+                    this.process();
                 })
                 .catch((err) => {
                     console.warn("ERROR: " + err);
