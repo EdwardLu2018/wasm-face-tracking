@@ -28,4 +28,4 @@ else
     make
 fi
 
-mv face_tracker_wasm.* ../js/
+mv face_tracker_wasm.* ../src/
