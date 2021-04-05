@@ -6,8 +6,8 @@ var stats = null;
 const OVERLAY_COLOR = "#ef2d5e";
 
 var faceTrackerSource = new FaceTracker.FaceTrackerSource({
-    width: 320,
-    height: 240,
+    width: width,
+    height: height,
 });
 var faceTracker = new FaceTracker.FaceTracker(faceTrackerSource);
 faceTracker.init();
