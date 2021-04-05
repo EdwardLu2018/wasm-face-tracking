@@ -46,8 +46,8 @@ export class FaceTrackerSource {
                     facingMode: "environment",
                     width: { ideal: this.options.width },
                     height: { ideal: this.options.height },
+                    ...cameraOptions
                 },
-                ...cameraOptions
             })
             .then((stream) => {
                 this.video.srcObject = stream;
