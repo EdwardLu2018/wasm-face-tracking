@@ -1,5 +1,5 @@
 {
-  "name": "FaceTracking",
+  "name": "FaceTracker",
   "version": "1.0.0",
   "main": "./src/index.js",
   "scripts": {
@@ -23,18 +23,18 @@
     "last 3 safari versions"
   ],
   "devDependencies": {
-    "eslint": "^7.15.0",
-    "eslint-config-google": "^0.14.0",
     "@babel/core": "^7.9.0",
     "@babel/plugin-transform-runtime": "^7.9.0",
     "@babel/preset-env": "^7.9.5",
     "babel": "^6.23.0",
     "babel-loader": "^8.1.0",
+    "eslint": "^7.15.0",
+    "eslint-config-google": "^0.14.0",
+    "raw-loader": "^4.0.1",
+    "terser-webpack-plugin": "^2.3.6",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11",
-    "raw-loader": "^4.0.1",
-    "terser-webpack-plugin": "^2.3.6"
+    "worker-loader": "^3.0.4"
   },
-  "dependencies": {},
   "description": "Facial feature detection, tracking, and head pose estimation running in WASM"
 }

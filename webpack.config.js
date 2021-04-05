@@ -29,6 +29,13 @@ module.exports = (env, argv) => ({
         }]
       },
       {
+        test: /\worker\.js$/,
+        use: {
+          loader: 'worker-loader',
+          options: { inline: 'no-fallback' }
+        }
+      },
+      {
         test: /\.glsl$/i,
         use: [
           {

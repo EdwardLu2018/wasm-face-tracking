@@ -1,4 +1,4 @@
 import { FaceTracker } from "./face-tracker"
-import { GrayScaleMedia } from "./grayscale"
+import { FaceTrackerSource } from "./face-tracker-source"
 
-export { FaceTracker, GrayScaleMedia }
+export { FaceTracker, FaceTrackerSource }

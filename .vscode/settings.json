@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.s": "cortex-debug.disassembly",
+        "*.S": "gas",
+        "queue": "cpp",
+        "stack": "cpp"
+    }
+}

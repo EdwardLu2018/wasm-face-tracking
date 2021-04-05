@@ -1,11 +1,10 @@
-importScripts("./face_tracker_wasm.js");
-importScripts("../dist/face-tracker.min.js");
+import {FaceTrackerModule} from "./face-tracker-module";
 
-self.onmessage = function (e) {
+onmessage = function (e) {
     var msg = e.data;
     switch (msg.type) {
         case "init": {
-            load(msg);
+            load(msg.width, msg.height, msg.data);
             return;
         }
         case "process": {
@@ -14,27 +13,21 @@ self.onmessage = function (e) {
             return;
         }
         default: {
-            break;
+            return;
         }
     }
 };
 
 var next = null;
-
 var faceTracker = null;
-
 var features = null, pose = null;
 
-function load(msg) {
+function load(width, height, data) {
     var onLoad = function() {
         postMessage({type: "loaded"});
     }
 
-    var onProgress = function(progress) {
-        postMessage({type: "progress", progress: progress});
-    }
-
-    faceTracker = new FaceTracker.FaceTracker(msg.width, msg.height, onLoad, onProgress);
+    faceTracker = new FaceTrackerModule(width, height, data, onLoad);
 }
 
 function process() {
@@ -47,13 +40,9 @@ function process() {
             pose = faceTracker.getPose(features.landmarks);
         }
     }
+    console.log(pose.translation.x, pose.translation.y, pose.translation.z);
 
-    if (features) {
-        postMessage({type: "result", features: features, pose: pose});
-    }
-    // else {
-    //     postMessage({ type: "not found" });
-    // }
+    postMessage({type: "result", features: features, pose: pose});
 
     next = null;
 }
