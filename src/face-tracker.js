@@ -14,22 +14,22 @@ export class FaceTracker {
         this.worker = new Worker();
     }
 
-    init(cameraOptions) {
+    init(shapePredURL, cameraOptions) {
         this.running = true;
         this.cameraOptions = cameraOptions;
         this.source.init(cameraOptions)
             .then((source) => {
                 this.preprocessor.attachElem(source);
-                this.onInit(source);
+                this.onInit(source, shapePredURL);
             })
             .catch((err) => {
                 console.warn("ERROR: " + err);
             });
     }
 
-    onInit(source) {
+    onInit(source, shapePredURL) {
         let _this = this;
-        this.getShapePredictor();
+        this.getShapePredictor(shapePredURL);
         const initEvent = new CustomEvent(
             "onFaceTrackerInit",
             {detail: {source: source}}
@@ -65,10 +65,12 @@ export class FaceTracker {
         }
     }
 
-    getShapePredictor() {
+    getShapePredictor(shapePredURL) {
+        if (!shapePredURL)
+            shapePredURL = "/data/shape_predictor_68_face_landmarks_compressed.dat";
         const req = new XMLHttpRequest();
         req.addEventListener('progress', (e) => this.shapePredictorProgress(e));
-        req.open("GET", "/data/shape_predictor_68_face_landmarks_compressed.dat", true);
+        req.open("GET", shapePredURL, true);
         req.responseType = "arraybuffer";
         req.onload = (e) => {
             const payload = req.response;

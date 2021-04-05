@@ -1,8 +1,8 @@
 export class FaceTrackerSource {
     constructor(options) {
         this.options = {
-            width: 1280,
-            height: 720,
+            width: 640,
+            height: 480,
         }
         this.setOptions(options);
 

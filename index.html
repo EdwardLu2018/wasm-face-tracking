@@ -15,6 +15,12 @@
                 position: relative;
                 top: 250px;
             }
+            .flipVideo {
+                transform: scale(-1, 1);
+                -moz-transform: scale(-1, 1); /* Firefox */
+                -webkit-transform: scale(-1, 1); /* Safari and Chrome */
+                -o-transform: scale(-1, 1); /* Opera */
+            }
         </style>
 
         <title>Track and Detect Face Features</title>
@@ -24,7 +30,4 @@
         <button id="restart" onclick="restart()">Restart</button>
         <button id="stop" onclick="stop()">Stop</button>
     </body>
-
-    <script type="text/javascript" src="dist/arena-face-tracker.js"></script>
-    <script type="text/javascript" src="js/script.js"></script>
 </html>

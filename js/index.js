@@ -95,6 +95,7 @@ window.addEventListener("onFaceTrackerInit", (e) => {
     stats.showPanel(0);
     document.getElementById("stats").appendChild(stats.domElement);
 
+    e.detail.source.className = 'flipVideo';
     document.body.appendChild(e.detail.source);
     document.body.appendChild(overlayCanvas);
     // document.body.appendChild(faceTracker.preprocessor.canvas);

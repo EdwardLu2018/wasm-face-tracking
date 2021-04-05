@@ -491,11 +491,11 @@ void get_pose(uint16_t landmarks[], size_t cols, size_t rows) {
         var i = 0;
 
         const pose = {};
-        pose["quaternion"] = {};
-        pose["quaternion"]["x"] = $a[i++];
-        pose["quaternion"]["y"] = $a[i++];
-        pose["quaternion"]["z"] = $a[i++];
-        pose["quaternion"]["w"] = $a[i++];
+        pose["rotation"] = {};
+        pose["rotation"]["x"] = $a[i++];
+        pose["rotation"]["y"] = $a[i++];
+        pose["rotation"]["z"] = $a[i++];
+        pose["rotation"]["w"] = $a[i++];
 
         pose["translation"] = {};
         pose["translation"]["x"] = $a[i++];
