@@ -33,4 +33,4 @@ file( GLOB SRCS ${SRC_DIR}/*.cpp )
 add_executable( face_tracker_wasm ${SRC_DIR}/face_tracker_wasm.cpp ${SRCS} )
 target_link_libraries( face_tracker_wasm dlib::dlib ${opencv_js} )
 
-set_target_properties( face_tracker_wasm PROPERTIES LINK_FLAGS "--memory-init-file 0 -s MODULARIZE=1 -s EXPORT_NAME='FaceTrackerWASM' -s SINGLE_FILE=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='['_malloc', '_free']' -s EXTRA_EXPORTED_RUNTIME_METHODS='['cwrap']' -s USE_ZLIB=1 -s WASM=1" )
+set_target_properties( face_tracker_wasm PROPERTIES LINK_FLAGS "--memory-init-file 0 -s MODULARIZE=1 -s EXPORT_NAME='FaceTrackerWASM' -s SINGLE_FILE=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_FUNCTIONS='['_malloc', '_free']' -s EXPORTED_RUNTIME_METHODS='['cwrap']' -s USE_ZLIB=1 -s WASM=1" )
