@@ -1,7 +1,13 @@
-attribute vec2 position;
-varying vec2 tex_coords;
+#version 300 es
 
-void main(void) {
-    tex_coords = (position + 1.0) / 2.0;
-    gl_Position = vec4(position * vec2(-1, 1), 0.0, 1.0);
+precision highp int;
+precision mediump float;
+
+layout (location=0) in vec2 a_position;
+layout (location=1) in vec2 a_texCoord;
+out vec2 texCoord;
+
+void main() {
+    gl_Position = vec4(a_position * vec2(-1, 1), 0.0f, 1.0f); // * vec2(-1, 1) mirrors image
+    texCoord = a_texCoord;
 }

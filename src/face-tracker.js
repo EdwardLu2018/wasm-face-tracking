@@ -10,6 +10,8 @@ export class FaceTracker {
         this.sourceWidth = this.source.options.width;
         this.sourceHeight = this.source.options.height;
 
+        this.grayBuf = new Uint8Array(this.sourceWidth * this.sourceHeight);
+
         this.preprocessor = new Preprocessor(this.sourceWidth, this.sourceHeight);
         this.worker = new Worker();
     }
@@ -110,10 +112,17 @@ export class FaceTracker {
 
     process() {
         if (this.running) {
-            const imageData = this.preprocessor.getPixels();
-            this.worker.postMessage({
-                type: "process",
-                imagedata: imageData
+            this.preprocessor.getPixels().then((imageData) => {
+                var j = 0;
+                for (var i = 0; i < imageData.length; i += 4) {
+                    this.grayBuf[j] = imageData[i];
+                    j++;
+                }
+
+                this.worker.postMessage({
+                    type: "process",
+                    imagedata: this.grayBuf
+                });
             });
         }
     }
