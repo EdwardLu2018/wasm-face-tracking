@@ -11,7 +11,7 @@ export class Preprocessor {
 
         this.gl = GLUtils.createGL(this.canvas, this.width, this.height);
 
-        const flipProg = require("./shaders/flip-image.glsl");
+        const flipProg = require("./shaders/vertex-shader.glsl");
         const grayProg = require("./shaders/grayscale.glsl");
         const program = GLUtils.createProgram(this.gl, flipProg, grayProg);
         GLUtils.useProgram(this.gl, program);

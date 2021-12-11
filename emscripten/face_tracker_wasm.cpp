@@ -21,18 +21,21 @@
 extern "C" {
 #endif
 
-using namespace std;
 using namespace dlib;
 using namespace cv;
 
 frontal_face_detector detector;
 shape_predictor pose_model;
 
-std::vector<Point3d> model_points;
+Mat distortion;
+
+std::vector<Point3d> model_pts(14);
+std::vector<Point2d> image_pts(14);
 
 EMSCRIPTEN_KEEPALIVE
 void pose_model_init(char buf[], size_t buf_len) {
     detector = get_frontal_face_detector();
+    distortion = Mat::zeros(4, 1, CV_64FC1);
 
     char *decompressed = new char[MODEL_SIZE];
 
@@ -56,26 +59,26 @@ void pose_model_init(char buf[], size_t buf_len) {
     delete [] buf;
     delete [] decompressed;
 
-    model_points.push_back( Point3d(6.825897, 6.760612, 4.402142) );
-    model_points.push_back( Point3d(1.330353, 7.122144, 6.903745) );
-    model_points.push_back( Point3d(-1.330353, 7.122144, 6.903745) );
-    model_points.push_back( Point3d(-6.825897, 6.760612, 4.402142) );
-    model_points.push_back( Point3d(5.311432, 5.485328, 3.987654) );
-    model_points.push_back( Point3d(1.789930, 5.393625, 4.413414) );
-    model_points.push_back( Point3d(-1.789930, 5.393625, 4.413414) );
-    model_points.push_back( Point3d(-5.311432, 5.485328, 3.987654) );
-    model_points.push_back( Point3d(2.005628, 1.409845, 6.165652) );
-    model_points.push_back( Point3d(-2.005628, 1.409845, 6.165652) );
-    model_points.push_back( Point3d(2.774015, -2.080775, 5.048531) );
-    model_points.push_back( Point3d(-2.774015, -2.080775, 5.048531) );
-    model_points.push_back( Point3d(0.000000, -3.116408, 6.097667) );
-    model_points.push_back( Point3d(0.000000, -7.415691, 4.070434) );
+    model_pts[0]  = Point3d(6.825897, 6.760612, 4.402142);
+    model_pts[1]  = Point3d(1.330353, 7.122144, 6.903745);
+    model_pts[2]  = Point3d(-1.330353, 7.122144, 6.903745);
+    model_pts[3]  = Point3d(-6.825897, 6.760612, 4.402142);
+    model_pts[4]  = Point3d(5.311432, 5.485328, 3.987654);
+    model_pts[5]  = Point3d(1.789930, 5.393625, 4.413414);
+    model_pts[6]  = Point3d(-1.789930, 5.393625, 4.413414);
+    model_pts[7]  = Point3d(-5.311432, 5.485328, 3.987654);
+    model_pts[8]  = Point3d(2.005628, 1.409845, 6.165652);
+    model_pts[9]  = Point3d(-2.005628, 1.409845, 6.165652);
+    model_pts[10] = Point3d(2.774015, -2.080775, 5.048531);
+    model_pts[11] = Point3d(-2.774015, -2.080775, 5.048531);
+    model_pts[12] = Point3d(0.000000, -3.116408, 6.097667);
+    model_pts[12] = Point3d(0.000000, -7.415691, 4.070434);
 
-    cout << "Face Tracking Ready!" << endl;
+    std::cout << "Face Tracking Ready!" << std::endl;
 }
 
 EMSCRIPTEN_KEEPALIVE
-void detect_face_features(uchar pixels[], size_t cols, size_t rows) {
+void detect_face_features(uint8_t pixels[], size_t cols, size_t rows) {
     static correlation_tracker tracker;
     static bool track = false;
     static uint32_t frames = 0;
@@ -117,7 +120,7 @@ void detect_face_features(uchar pixels[], size_t cols, size_t rows) {
 
         full_object_detection shape = pose_model(gray, face_rect);
 
-        if (!track) {
+        if (!track && !face_rect.is_empty()) {
             track = true;
             tracker.start_track(gray, face_rect);
         }
@@ -437,9 +440,7 @@ void detect_face_features(uchar pixels[], size_t cols, size_t rows) {
 
 EMSCRIPTEN_KEEPALIVE
 void get_pose(uint16_t landmarks[], size_t cols, size_t rows) {
-    static bool first_iter = true;
-
-    static Mat camera_matrix, distortion;
+    static Mat camera_matrix;
     static Mat rot_vec, trans_vec, rot_mat;
     static Mat out_intrinsics = Mat(3, 3, CV_64FC1);
     static Mat out_rot = Mat(3, 3, CV_64FC1);
@@ -447,36 +448,28 @@ void get_pose(uint16_t landmarks[], size_t cols, size_t rows) {
     static Mat pose_mat = Mat(3, 4, CV_64FC1);
     static Mat euler_angle = Mat(3, 1, CV_64FC1);
 
-    static std::vector<Point2d> image_pts;
-
     double x, y, z;
 
-    if (first_iter) {
-        double focal_length = cols;
-        Point2d center = Point2d(cols/2, rows/2);
-        camera_matrix = (Mat_<double>(3,3) << focal_length, 0, center.x, 0 , focal_length, center.y, 0, 0, 1);
-        distortion = Mat::zeros(4, 1, CV_64FC1);
-        first_iter = false;
-    }
+    double focal_len = cols;
+    Point2d center = Point2d(cols/2, rows/2);
+    camera_matrix = (Mat_<double>(3,3) << focal_len, 0, center.x, 0 , focal_len, center.y, 0, 0, 1);
 
-    image_pts.push_back(Point2d(landmarks[2*17], landmarks[2*17+1])); // left brow left corner
-    image_pts.push_back(Point2d(landmarks[2*21], landmarks[2*21+1])); // left brow right corner
-    image_pts.push_back(Point2d(landmarks[2*22], landmarks[2*22+1])); // right brow left corner
-    image_pts.push_back(Point2d(landmarks[2*26], landmarks[2*26+1])); // right brow right corner
-    image_pts.push_back(Point2d(landmarks[2*36], landmarks[2*36+1])); // left eye left corner
-    image_pts.push_back(Point2d(landmarks[2*39], landmarks[2*39+1])); // left eye right corner
-    image_pts.push_back(Point2d(landmarks[2*42], landmarks[2*42+1])); // right eye left corner
-    image_pts.push_back(Point2d(landmarks[2*45], landmarks[2*45+1])); // right eye right corner
-    image_pts.push_back(Point2d(landmarks[2*31], landmarks[2*31+1])); // nose left corner
-    image_pts.push_back(Point2d(landmarks[2*35], landmarks[2*35+1])); // nose right corner
-    image_pts.push_back(Point2d(landmarks[2*48], landmarks[2*48+1])); // mouth left corner
-    image_pts.push_back(Point2d(landmarks[2*54], landmarks[2*54+1])); // mouth right corner
-    image_pts.push_back(Point2d(landmarks[2*57], landmarks[2*57+1])); // mouth central bottom corner
-    image_pts.push_back(Point2d(landmarks[2*8],  landmarks[2*8+1]));  // chin corner
+    image_pts[0]  = Point2d(landmarks[2*17], landmarks[2*17+1]); // left brow left corner
+    image_pts[1]  = Point2d(landmarks[2*21], landmarks[2*21+1]); // left brow right corner
+    image_pts[2]  = Point2d(landmarks[2*22], landmarks[2*22+1]); // right brow left corner
+    image_pts[3]  = Point2d(landmarks[2*26], landmarks[2*26+1]); // right brow right corner
+    image_pts[4]  = Point2d(landmarks[2*36], landmarks[2*36+1]); // left eye left corner
+    image_pts[5]  = Point2d(landmarks[2*39], landmarks[2*39+1]); // left eye right corner
+    image_pts[6]  = Point2d(landmarks[2*42], landmarks[2*42+1]); // right eye left corner
+    image_pts[7]  = Point2d(landmarks[2*45], landmarks[2*45+1]); // right eye right corner
+    image_pts[8]  = Point2d(landmarks[2*31], landmarks[2*31+1]); // nose left corner
+    image_pts[9]  = Point2d(landmarks[2*35], landmarks[2*35+1]); // nose right corner
+    image_pts[10] = Point2d(landmarks[2*48], landmarks[2*48+1]); // mouth left corner
+    image_pts[11] = Point2d(landmarks[2*54], landmarks[2*54+1]); // mouth right corner
+    image_pts[12] = Point2d(landmarks[2*57], landmarks[2*57+1]); // mouth central bottom corner
+    image_pts[13] = Point2d(landmarks[2*8],  landmarks[2*8+1]);  // chin corner
 
-    solvePnP(model_points, image_pts, camera_matrix, distortion, rot_vec, trans_vec);
-
-    image_pts.clear();
+    solvePnP(model_pts, image_pts, camera_matrix, distortion, rot_vec, trans_vec);
 
     Rodrigues(rot_vec, rot_mat);
     hconcat(rot_mat, trans_vec, pose_mat);
