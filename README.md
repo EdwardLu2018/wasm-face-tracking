@@ -1,6 +1,6 @@
 # wasm-face-tracking
 
-Standalone version for [this](https://github.com/conix-center/ARENA-core/tree/master/face-tracking)
+Standalone version for [this](https://github.com/conix-center/ARENA-core/tree/master/src/systems/face-tracking)
 
 ## Building
 
