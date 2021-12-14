@@ -1,6 +1,8 @@
 /* global ARENA */
 
-ARENA.FaceTracker = (function() {
+import {FaceTracker, FaceTrackerSource} from './dist/face-tracker.min.js';
+
+const ARENAFaceTracker = (function() {
     // ==================================================
     // PRIVATE VARIABLES
     // ==================================================
@@ -124,8 +126,8 @@ ARENA.FaceTracker = (function() {
 
         let numZeros = 0;
         for (let i = 0; i < landmarks.length; i++) {
-            if (i % 2 == 0 && landmarks[i] > width) return false;
-            if (i % 2 == 1 && landmarks[i] > height) return false;
+            // if (i % 2 == 0 && landmarks[i] > width) return false;
+            // if (i % 2 == 1 && landmarks[i] > height) return false;
             if (landmarks[i] == 0) numZeros++;
         }
         return numZeros <= landmarks.length / 2;
@@ -245,9 +247,14 @@ ARENA.FaceTracker = (function() {
     function restart() {
         running = true;
         if (!initialized) {
+            let cameraOptions = {};
+            const perfVideoInput = localStorage.getItem('prefVideoInput');
+            if (perfVideoInput) {
+                cameraOptions = {deviceId: {exact: perfVideoInput}};
+            }
             const shapePredURL =
                 'https://arena-cdn.conix.io/store/face-tracking/shape_predictor_68_face_landmarks_compressed.dat';
-            faceTracker.init(shapePredURL);
+            faceTracker.init(shapePredURL, cameraOptions);
             initialized = true;
         } else {
             faceTracker.restart();
@@ -258,24 +265,23 @@ ARENA.FaceTracker = (function() {
         // ==================================================
         // PUBLIC
         // ==================================================
-        init: function init(_displayBbox, _flipped) {
+        init: function init(_displayBbox) {
             displayBbox = _displayBbox;
-            flipped = _flipped;
+            flipped = true;
 
-            faceTrackerSource = new FaceTracker.FaceTrackerSource({
+            faceTrackerSource = new FaceTrackerSource({
                 width: width,
                 height: height,
             });
-            faceTracker = new FaceTracker.FaceTracker(faceTrackerSource);
+            faceTracker = new FaceTracker(faceTrackerSource);
 
             window.addEventListener('onFaceTrackerInit', (e) => {
                 const video = e.detail.source;
                 video.className = 'flipVideo';
-                video.style.borderRadius = '10px';
                 video.style.top = '15px';
                 video.style.left = '15px';
-                video.style.zIndex = '9999';
-                const videoWidth = video.style.width;
+                video.style.opacity = '0.3';
+                const videoWidth = ARENA.localVideoWidth;
                 const videoHeight = video.videoHeight / (video.videoWidth / videoWidth);
                 video.style.height = videoHeight + 'px';
                 document.body.appendChild(video);
