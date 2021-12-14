@@ -72,7 +72,7 @@ void pose_model_init(char buf[], size_t buf_len) {
     model_pts[10] = Point3d(2.774015, -2.080775, 5.048531);
     model_pts[11] = Point3d(-2.774015, -2.080775, 5.048531);
     model_pts[12] = Point3d(0.000000, -3.116408, 6.097667);
-    model_pts[12] = Point3d(0.000000, -7.415691, 4.070434);
+    model_pts[13] = Point3d(0.000000, -7.415691, 4.070434);
 
     std::cout << "Face Tracking Ready!" << std::endl;
 }
